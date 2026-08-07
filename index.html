@@ -1220,9 +1220,9 @@
           <div class="quick-icon-wrap"><i class="fa-solid fa-user-group"></i></div>
           <label>My Team</label>
         </div>
-        <div class="quick-item" onclick="toggleDrawer(true)">
-          <div class="quick-icon-wrap"><i class="fa-solid fa-table-cells"></i></div>
-          <label>More</label>
+        <div class="quick-item" onclick="switchTab('active-plans-view')">
+          <div class="quick-icon-wrap"><i class="fa-solid fa-chart-line"></i></div>
+          <label>Active Plan</label>
         </div>
       </div>
 
@@ -1376,6 +1376,16 @@
 
       <div id="user-active-plans-list">
         <!-- Rendered dynamically -->
+      </div>
+
+      <!-- General Information Card for How, When, and How Much to Earn -->
+      <div class="card" style="margin-top: 16px; background: rgba(56, 189, 248, 0.05); border: 1px dashed var(--card-border);">
+        <h4 style="font-size: 0.9rem; color: var(--dark-accent); margin-bottom: 8px;"><i class="fa-solid fa-circle-info"></i> How, When & How Much You Earn</h4>
+        <ul style="font-size: 0.75rem; color: var(--text-sub); list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+          <li><strong style="color: var(--text-main);">How to Earn:</strong> Purchase an investment package under the "Plans" tab to trigger daily payouts.</li>
+          <li><strong style="color: var(--text-main);">When to Earn:</strong> Profits accrue automatically and continuously every 24 hours from the exact timestamp of activation.</li>
+          <li><strong style="color: var(--text-main);">How Much is Earned:</strong> Your active balance is directly credited by the designated daily return of your package for the plan's entire period.</li>
+        </ul>
       </div>
     </div>
 
@@ -2098,6 +2108,9 @@
       if (viewId === 'earning-history-view') renderHistory();
       if (viewId === 'rewards-view') renderUserTasks();
       if (viewId === 'active-plans-view') {
+        if (currentUser && !currentUser.isAdmin) {
+          processAutomaticEarnings(currentUser.username);
+        }
         renderUserActivePlans();
         updateActivePlansHeader();
       }
@@ -2745,6 +2758,31 @@
       });
     }
 
+    // Trigger Forgot Password Reset Panel
+    function triggerForgotPassword(e) {
+      if (e) e.preventDefault();
+      const modalInner = document.getElementById('workflow-modal-inner');
+      modalInner.innerHTML = `
+        <h3 style="color: var(--text-main); margin-bottom: 6px;"><i class="fa-solid fa-key" style="color: var(--accent-gold);"></i> Reset Password</h3>
+        <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 14px;">Enter your username and registered phone number to verify and update your password.</p>
+        
+        <div style="text-align: left;">
+          <div class="input-group" style="margin-bottom: 10px;">
+            <input type="text" id="reset-user" class="form-input" style="padding-left: 20px;" placeholder="Username" required oninput="this.value = this.value.toLowerCase()">
+          </div>
+          <div class="input-group" style="margin-bottom: 14px;">
+            <input type="tel" id="reset-phone" class="form-input" style="padding-left: 20px;" placeholder="Phone Number" required>
+          </div>
+          <div class="input-group" style="margin-bottom: 14px;">
+            <input type="password" id="reset-new-pass" class="form-input" style="padding-left: 20px;" placeholder="New Password" required>
+          </div>
+          <button class="btn-primary" style="margin-top: 0;" onclick="submitForgotPasswordReset()">Reset Password</button>
+        </div>
+        <button class="btn-primary" style="background: #64748b; margin-top: 6px;" onclick="closeWorkflowModal()">Cancel</button>
+      `;
+      document.getElementById('workflow-modal').classList.remove('hidden');
+    }
+
     function openNotifications() {
       if (!currentUser || currentUser.isAdmin) return;
       const userObj = usersDb[currentUser.username];
@@ -3103,7 +3141,7 @@
             <div class="empty-icon-circle"><i class="fa-solid fa-seedling"></i></div>
             <h3>No Active Plans</h3>
             <p style="font-size:0.8rem; color: var(--text-muted); margin-top: 6px;">
-              Your active plans will appear here once approved.
+              Your active plans will appear here once your investment is completed.
             </p>
             <button class="btn-explore" onclick="switchTab('plans-view')">Explore Plans <i class="fa-solid fa-arrow-right"></i></button>
           </div>
@@ -3862,31 +3900,6 @@
           <p style="margin-bottom: 12px;">By interacting with this testing platform, you agree to treat all assets and features as educational mockup assets. Users agree to prevent using dummy platform features for real-world transaction emulation.</p>
         </div>
         <button class="btn-primary" style="margin-top: 15px;" onclick="closeWorkflowModal()">I Understand & Accept</button>
-      `;
-      document.getElementById('workflow-modal').classList.remove('hidden');
-    }
-
-    // Forgot Password Dynamic Overlay Trigger
-    function triggerForgotPassword(e) {
-      if (e) e.preventDefault();
-      const modalInner = document.getElementById('workflow-modal-inner');
-      modalInner.innerHTML = `
-        <h3 style="color: var(--text-main); margin-bottom: 6px;"><i class="fa-solid fa-key" style="color: var(--accent-gold);"></i> Reset Password</h3>
-        <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 14px;">Enter your username and registered phone number to verify and update your password.</p>
-        
-        <div style="text-align: left;">
-          <div class="input-group" style="margin-bottom: 10px;">
-            <input type="text" id="reset-user" class="form-input" style="padding-left: 20px;" placeholder="Username" required oninput="this.value = this.value.toLowerCase()">
-          </div>
-          <div class="input-group" style="margin-bottom: 14px;">
-            <input type="tel" id="reset-phone" class="form-input" style="padding-left: 20px;" placeholder="Phone Number" required>
-          </div>
-          <div class="input-group" style="margin-bottom: 14px;">
-            <input type="password" id="reset-new-pass" class="form-input" style="padding-left: 20px;" placeholder="New Password" required>
-          </div>
-          <button class="btn-primary" style="margin-top: 0;" onclick="submitForgotPasswordReset()">Reset Password</button>
-        </div>
-        <button class="btn-primary" style="background: #64748b; margin-top: 6px;" onclick="closeWorkflowModal()">Cancel</button>
       `;
       document.getElementById('workflow-modal').classList.remove('hidden');
     }
