@@ -10,9 +10,10 @@
   <!-- Google Font: Inter -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Firebase App & Database Compat SDKs -->
+  <!-- Firebase App, Auth & Database Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
   <style>
     /* ==========================================================================
@@ -1709,7 +1710,7 @@
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-withdraw-tab', this)">Withdrawals</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-plans-tab', this)">Plans</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-details-tab', this)">System Settings</button>
-          <button class="admin-tab-btn" onclick="switchAdminTab('admin-locks-tab', this)">User Locks</button>
+          <button class="admin-tab-btn" onclick="switchAdminTab('admin-locks-tab', this)">User Accounts & Locks</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-promo-tab', this)">Promo Codes</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-tasks-tab', this)">Reward Tasks</button>
         </div>
@@ -1802,8 +1803,8 @@
 
         <!-- TAB 5: USER WITHDRAWAL LOCKS -->
         <div id="admin-locks-tab" class="admin-content-view hidden">
-          <h3 style="font-size: 1rem; margin-bottom: 12px;">Withdrawal Locks & Require Invites</h3>
-          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Enforce safety invite limits on specific random users before their withdrawal can be processed.</p>
+          <h3 style="font-size: 1rem; margin-bottom: 12px;">User Accounts & Withdrawal Security Locks</h3>
+          <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 12px;">Manage user accounts and enforce invite restrictions prior to processing withdrawals.</p>
           <div id="admin-locks-list">
             <!-- Rendered dynamically -->
           </div>
@@ -1964,9 +1965,10 @@
       databaseURL: "https://selled-website-default-rtdb.asia-southeast1.firebasedatabase.app/"
     };
     
-    // Initialize Database References
+    // Initialize Database & Auth References
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
+    const auth = firebase.auth();
 
     // Local Memory Mirrors
     let usersDb = {};
@@ -1982,19 +1984,67 @@
       return parseFloat(configDb.pkr_rate) || 300;
     }
 
+    // Sanitize user object structure ensuring all required keys exist
+    function sanitizeUserObject(u) {
+      if (!u || typeof u !== 'object') return null;
+      if (!u.active_plans || !Array.isArray(u.active_plans)) u.active_plans = [];
+      if (!u.notifications || !Array.isArray(u.notifications)) u.notifications = [];
+      if (!u.claimed_tasks || !Array.isArray(u.claimed_tasks)) u.claimed_tasks = [];
+      if (!u.withdrawalLock || typeof u.withdrawalLock !== 'object') {
+        u.withdrawalLock = { enabled: false, requiredInvites: 0 };
+      }
+      if (u.balance === undefined || u.balance === null) u.balance = 0;
+      if (u.total_deposits === undefined || u.total_deposits === null) u.total_deposits = 0;
+      if (u.total_withdrawals === undefined || u.total_withdrawals === null) u.total_withdrawals = 0;
+      if (u.referral_comm === undefined || u.referral_comm === null) u.referral_comm = 0;
+      if (!u.referred_by) u.referred_by = null;
+      if (!u.uid) u.uid = "MOCK-" + Math.floor(100000 + Math.random() * 900000);
+      return u;
+    }
+
+    // Extract valid array items from raw Firebase inputs
+    function extractArray(data) {
+      if (!data) return [];
+      let arr = Array.isArray(data) ? data : Object.values(data);
+      return arr.filter(item => item && typeof item === 'object');
+    }
+
     // Real-Time Database sync loader replacing manual boot loading
     window.addEventListener('DOMContentLoaded', () => {
       database.ref('/').on('value', snapshot => {
         const rootData = snapshot.val() || {};
         
-        usersDb = rootData.trading_users || {};
-        // Safeguard for Firebase removing empty arrays or translating them to objects
-        plansDb = rootData.trading_plans ? (Array.isArray(rootData.trading_plans) ? rootData.trading_plans : Object.values(rootData.trading_plans)) : [];
-        transactionsDb = rootData.trading_tx ? (Array.isArray(rootData.trading_tx) ? rootData.trading_tx : Object.values(rootData.trading_tx)) : [];
-        promoDb = rootData.trading_promo ? (Array.isArray(rootData.trading_promo) ? rootData.trading_promo : Object.values(rootData.trading_promo)) : [
-          { code: "WELCOME10", reward: 10, memberLimit: 50, claimedBy: [] }
-        ];
-        tasksDb = rootData.trading_tasks ? (Array.isArray(rootData.trading_tasks) ? rootData.trading_tasks : Object.values(rootData.trading_tasks)) : [];
+        // Clean and sanitize usersDb dictionary to eliminate Firebase sparse array null-pointer errors
+        usersDb = {};
+        const rawUsers = rootData.trading_users || {};
+        if (Array.isArray(rawUsers)) {
+          rawUsers.forEach(u => {
+            if (u && typeof u === 'object' && u.username) {
+              usersDb[u.username] = sanitizeUserObject(u);
+            }
+          });
+        } else if (typeof rawUsers === 'object') {
+          Object.keys(rawUsers).forEach(k => {
+            const u = rawUsers[k];
+            if (u && typeof u === 'object' && u.username) {
+              usersDb[u.username] = sanitizeUserObject(u);
+            }
+          });
+        }
+
+        // Clean Array Collections
+        plansDb = extractArray(rootData.trading_plans);
+        transactionsDb = extractArray(rootData.trading_tx);
+        promoDb = extractArray(rootData.trading_promo);
+        tasksDb = extractArray(rootData.trading_tasks);
+
+        if (promoDb.length === 0) {
+          promoDb = [{ code: "WELCOME10", reward: 10, memberLimit: 50, claimedBy: [] }];
+        }
+        promoDb.forEach(p => {
+          if (!p.claimedBy || !Array.isArray(p.claimedBy)) p.claimedBy = [];
+        });
+
         configDb = rootData.trading_config || {
           pkr_rate: 300,
           whatsapp_admin: "",
@@ -2157,12 +2207,12 @@
 
     // Synchronize Client State with Firebase RTDB 
     function saveState() {
-      database.ref('trading_users').set(usersDb);
-      database.ref('trading_plans').set(plansDb);
-      database.ref('trading_tx').set(transactionsDb);
-      database.ref('trading_promo').set(promoDb);
-      database.ref('trading_config').set(configDb);
-      database.ref('trading_tasks').set(tasksDb);
+      if (usersDb) database.ref('trading_users').set(usersDb);
+      if (plansDb) database.ref('trading_plans').set(plansDb);
+      if (transactionsDb) database.ref('trading_tx').set(transactionsDb);
+      if (promoDb) database.ref('trading_promo').set(promoDb);
+      if (configDb) database.ref('trading_config').set(configDb);
+      if (tasksDb) database.ref('trading_tasks').set(tasksDb);
     }
 
     // Tab Navigation Switcher
@@ -2247,7 +2297,7 @@
     // System Notification Helper
     function addNotification(username, text) {
       if (!usersDb[username]) return;
-      if (!usersDb[username].notifications) {
+      if (!usersDb[username].notifications || !Array.isArray(usersDb[username].notifications)) {
         usersDb[username].notifications = [];
       }
       usersDb[username].notifications.push({
@@ -2260,7 +2310,7 @@
     }
 
     // User Registration
-    function handleRegister(e) {
+    async function handleRegister(e) {
       e.preventDefault();
       const user = document.getElementById('reg-user').value.toLowerCase().trim();
       const phone = document.getElementById('reg-phone').value.trim();
@@ -2269,6 +2319,10 @@
       const refUser = document.getElementById('reg-ref').value.toLowerCase().trim();
       const termsCheck = document.getElementById('reg-terms-check');
 
+      if (!user) {
+        alert("Please enter a username.");
+        return;
+      }
       if (user === "admin") {
         alert("The username 'admin' is reserved.");
         return;
@@ -2290,8 +2344,18 @@
         return;
       }
 
-      // Register clean model
-      usersDb[user] = {
+      // Register with Firebase Authentication
+      try {
+        const authEmail = `${user}@mockup.com`;
+        await auth.createUserWithEmailAndPassword(authEmail, pass).catch(err => {
+          console.log("Firebase Auth notification:", err.message);
+        });
+      } catch (err) {
+        console.log("Auth catch error:", err);
+      }
+
+      // Create model
+      const newUserObj = {
         uid: "MOCK-" + Math.floor(100000 + Math.random() * 900000),
         username: user,
         phone: phone,
@@ -2311,13 +2375,20 @@
         }
       };
 
+      usersDb[user] = newUserObj;
+
+      // Add Notification
       addNotification(user, `Welcome to Mockup Trading, ${user}! Explore our investment packages to start earning daily returns.`);
+
+      // Write directly to user path in Realtime Database
+      database.ref('trading_users/' + user).set(newUserObj);
       saveState();
+
       enterApp(user);
     }
 
     // User Login
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       const user = document.getElementById('login-user').value.toLowerCase().trim();
       const pass = document.getElementById('login-pass').value;
@@ -2330,17 +2401,30 @@
       }
 
       if (usersDb[user] && usersDb[user].password === pass) {
+        try {
+          await auth.signInWithEmailAndPassword(`${user}@mockup.com`, pass).catch(() => {});
+        } catch(err) {}
         enterApp(user);
-      } else {
-        alert("Invalid login credentials.");
+        return;
       }
+
+      // Login fallback check by phone number
+      const matchedUserKey = Object.keys(usersDb).find(k => usersDb[k] && usersDb[k].phone === user && usersDb[k].password === pass);
+      if (matchedUserKey) {
+        enterApp(matchedUserKey);
+        return;
+      }
+
+      alert("Invalid login credentials.");
     }
 
     // Transition into User App
     function enterApp(username) {
+      if (!usersDb[username]) return;
       currentUser = usersDb[username];
       localStorage.setItem('logged_in_user', username);
       
+      if (!currentUser.active_plans) currentUser.active_plans = [];
       if (!currentUser.notifications) currentUser.notifications = [];
       if (currentUser.referred_by === undefined) currentUser.referred_by = null;
       if (!currentUser.referral_comm) currentUser.referral_comm = 0.00;
@@ -2356,7 +2440,8 @@
 
       // Fill invitation links
       const formattedInviteLink = `${window.location.origin}${window.location.pathname}?ref=${username}`;
-      document.getElementById('team-invite-url').value = formattedInviteLink;
+      const teamInviteInput = document.getElementById('team-invite-url');
+      if (teamInviteInput) teamInviteInput.value = formattedInviteLink;
 
       processAutomaticEarnings(username);
       updateDashboardData();
@@ -2380,6 +2465,8 @@
     function logout() {
       currentUser = null;
       localStorage.removeItem('logged_in_user');
+      auth.signOut().catch(() => {});
+
       document.getElementById('bottom-bar').classList.add('hidden');
       const views = ['home-view', 'plans-view', 'active-plans-view', 'earning-history-view', 'rewards-view', 'team-view', 'profile-view', 'admin-view'];
       views.forEach(v => {
@@ -2397,22 +2484,23 @@
 
       processAutomaticEarnings(currentUser.username);
       const userObj = usersDb[currentUser.username];
-      
+      if (!userObj) return;
+
       let myPendingDeposits = 0;
       let myPendingWithdrawals = 0;
 
-      const myTxs = transactionsDb.filter(t => t.user === userObj.username);
+      const myTxs = (transactionsDb || []).filter(t => t && t.user === userObj.username);
       myTxs.forEach(t => {
         if (t.type === 'deposit' && t.status === 'pending') {
-          myPendingDeposits += parseFloat(t.amountUsd);
+          myPendingDeposits += parseFloat(t.amountUsd || 0);
         }
         if (t.type === 'withdrawal' && t.status === 'pending') {
-          myPendingWithdrawals += parseFloat(t.amountUsd);
+          myPendingWithdrawals += parseFloat(t.amountUsd || 0);
         }
       });
 
-      document.getElementById('user-balance').innerText = parseFloat(userObj.balance).toFixed(2);
-      document.getElementById('user-balance-pkr').innerText = usdToPkr(userObj.balance);
+      document.getElementById('user-balance').innerText = parseFloat(userObj.balance || 0).toFixed(2);
+      document.getElementById('user-balance-pkr').innerText = usdToPkr(userObj.balance || 0);
 
       document.getElementById('sum-total-deposits').innerText = parseFloat(userObj.total_deposits || 0).toFixed(2);
       document.getElementById('sum-total-withdrawals').innerText = parseFloat(userObj.total_withdrawals || 0).toFixed(2);
@@ -2424,7 +2512,7 @@
       let dynamicEarningsTotal = 0;
       myTxs.forEach(t => {
         if ((t.type === 'earnings' || t.type === 'promo_reward' || t.type === 'referral_comm') && t.status === 'paid') {
-          dynamicEarningsTotal += parseFloat(t.amountUsd);
+          dynamicEarningsTotal += parseFloat(t.amountUsd || 0);
         }
       });
       document.getElementById('act-total-earnings').innerText = dynamicEarningsTotal.toFixed(2);
@@ -2458,7 +2546,7 @@
         if (claimableDays > 0) {
           for (let i = 0; i < claimableDays; i++) {
             const dailyReward = parseFloat(plan.daily);
-            userObj.balance = parseFloat(userObj.balance) + dailyReward;
+            userObj.balance = parseFloat(userObj.balance || 0) + dailyReward;
             plan.daysClaimed++;
             plan.lastClaimed = now;
 
@@ -2497,6 +2585,7 @@
 
     function selectPlanToDeposit(planIndex) {
       const plan = plansDb[planIndex];
+      if (!plan) return;
       const pkrPrice = usdToPkr(plan.price);
       
       const modalInner = document.getElementById('workflow-modal-inner');
@@ -2538,6 +2627,7 @@
     function openPaymentSubmission(planIndex, gateway) {
       selectedDepositScreenshotFile = null;
       const plan = plansDb[planIndex];
+      if (!plan) return;
       const pkrPrice = usdToPkr(plan.price);
       let payDetailsHtml = ``;
 
@@ -2586,10 +2676,7 @@
             <!-- Label 2: Payment screenshot * -->
             <label style="font-size:0.95rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:8px;">Payment screenshot <span style="color: #ef4444;">*</span></label>
             
-            <!-- Dashboard Box 2: Screenshot Upload Container matching exact screenshot design -->
             <div class="upload-box-container" onclick="document.getElementById('deposit-screenshot-input').click()">
-              
-              <!-- Cloud Icon -->
               <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 16px;"></i>
               
               <div class="upload-text-main" id="upload-box-main-text" style="font-size: 1rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px;">
@@ -2722,7 +2809,7 @@
       const modalInner = document.getElementById('workflow-modal-inner');
       modalInner.innerHTML = `
         <h3 style="color: var(--text-main); margin-bottom: 4px;">Account Withdrawal</h3>
-        <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom:12px;">Available: $${parseFloat(currentUser.balance).toFixed(2)} ≈ ${usdToPkr(currentUser.balance)} PKR</p>
+        <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom:12px;">Available: $${parseFloat(currentUser.balance || 0).toFixed(2)} ≈ ${usdToPkr(currentUser.balance || 0)} PKR</p>
         
         <div style="text-align:left">
           <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);">Withdrawal Gateway Method</label>
@@ -2815,7 +2902,7 @@
         alert("Minimum withdrawal limit is $5.00");
         return;
       }
-      if (usdAmount > currentUser.balance) {
+      if (usdAmount > (currentUser.balance || 0)) {
         alert("Insufficient account balance.");
         return;
       }
@@ -2838,7 +2925,7 @@
       }
 
       const currentRate = getPkrRate();
-      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) - usdAmount;
+      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance || 0) - usdAmount;
       
       const newTx = {
         txId: "TX" + Date.now(),
@@ -2866,7 +2953,7 @@
        =================================================================== */
     function handleRedeemPromo() {
       const rawCode = document.getElementById('promo-input-field').value.toUpperCase().trim();
-      const codeIndex = promoDb.findIndex(p => p.code === rawCode);
+      const codeIndex = promoDb.findIndex(p => p && p.code === rawCode);
 
       if (codeIndex === -1) {
         alert("Invalid or expired promo code.");
@@ -2874,7 +2961,7 @@
       }
 
       const promo = promoDb[codeIndex];
-      if (!promo.claimedBy) promo.claimedBy = [];
+      if (!promo.claimedBy || !Array.isArray(promo.claimedBy)) promo.claimedBy = [];
       if (!promo.memberLimit) promo.memberLimit = 999999;
 
       if (promo.claimedBy.includes(currentUser.username)) {
@@ -2890,7 +2977,7 @@
       const currentRate = getPkrRate();
       const rewardAmount = parseFloat(promo.reward);
       promo.claimedBy.push(currentUser.username);
-      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) + rewardAmount;
+      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance || 0) + rewardAmount;
       
       transactionsDb.push({
         txId: "TX" + Date.now(),
@@ -2918,8 +3005,9 @@
     function updateNotificationBadges() {
       if (!currentUser || currentUser.isAdmin) return;
       const userObj = usersDb[currentUser.username];
+      if (!userObj) return;
       const notifs = userObj.notifications || [];
-      const unreadCount = notifs.filter(n => !n.read).length;
+      const unreadCount = notifs.filter(n => n && !n.read).length;
 
       document.querySelectorAll('.badge-count').forEach(badge => {
         if (unreadCount > 0) {
@@ -2959,6 +3047,7 @@
     function openNotifications() {
       if (!currentUser || currentUser.isAdmin) return;
       const userObj = usersDb[currentUser.username];
+      if (!userObj) return;
       const notifs = userObj.notifications || [];
       const sortedNotifs = [...notifs].reverse(); 
 
@@ -2973,6 +3062,7 @@
         `;
       } else {
         sortedNotifs.forEach(n => {
+          if (!n) return;
           const isUnread = !n.read;
           const bullet = isUnread ? `<span style="width: 8px; height: 8px; background: var(--accent-green); border-radius: 50%; display: inline-block; margin-right: 6px;"></span>` : "";
           const rowBg = isUnread ? `background: rgba(56, 189, 248, 0.05); border:1px solid rgba(56, 189, 248, 0.15);` : `background: rgba(255, 255, 255, 0.03); border: 1px solid var(--input-border);`;
@@ -3012,7 +3102,8 @@
 
     function readSingleNotification(id) {
       const userObj = usersDb[currentUser.username];
-      const notif = userObj.notifications.find(n => n.id === id);
+      if (!userObj || !userObj.notifications) return;
+      const notif = userObj.notifications.find(n => n && n.id === id);
       if (notif) {
         notif.read = true;
         saveState();
@@ -3022,8 +3113,8 @@
 
     function closeNotificationsAndMarkRead() {
       const userObj = usersDb[currentUser.username];
-      if (userObj.notifications) {
-        userObj.notifications.forEach(n => n.read = true);
+      if (userObj && userObj.notifications) {
+        userObj.notifications.forEach(n => { if (n) n.read = true; });
       }
       saveState();
       closeWorkflowModal();
@@ -3031,8 +3122,10 @@
 
     function clearAllNotifications() {
       const userObj = usersDb[currentUser.username];
-      userObj.notifications = [];
-      saveState();
+      if (userObj) {
+        userObj.notifications = [];
+        saveState();
+      }
       openNotifications();
     }
 
@@ -3045,14 +3138,18 @@
       let l2 = [];
       let l3 = [];
 
-      Object.values(usersDb).forEach(u => {
+      if (!username || !usersDb) return { l1, l2, l3 };
+
+      const allUsers = Object.values(usersDb).filter(u => u && typeof u === 'object' && u.username && u.username !== 'admin');
+
+      allUsers.forEach(u => {
         if (u.referred_by === username) {
           l1.push(u);
         }
       });
 
       l1.forEach(u1 => {
-        Object.values(usersDb).forEach(u => {
+        allUsers.forEach(u => {
           if (u.referred_by === u1.username) {
             l2.push(u);
           }
@@ -3060,7 +3157,7 @@
       });
 
       l2.forEach(u2 => {
-        Object.values(usersDb).forEach(u => {
+        allUsers.forEach(u => {
           if (u.referred_by === u2.username) {
             l3.push(u);
           }
@@ -3078,22 +3175,38 @@
       let totalTeamInvestment = 0;
       const downlineUsernames = [...l1, ...l2, ...l3].map(u => u.username);
       
-      transactionsDb.forEach(t => {
-        if (t.type === 'deposit' && t.status === 'paid' && downlineUsernames.includes(t.user)) {
-          totalTeamInvestment += parseFloat(t.amountUsd);
+      (transactionsDb || []).forEach(t => {
+        if (t && t.type === 'deposit' && t.status === 'paid' && downlineUsernames.includes(t.user)) {
+          totalTeamInvestment += parseFloat(t.amountUsd || 0);
         }
       });
 
-      document.getElementById('team-count').innerText = totalMembersCount;
-      document.getElementById('team-investment').innerText = totalTeamInvestment.toFixed(2);
-      document.getElementById('act-team-members').innerText = totalMembersCount;
-      document.getElementById('act-team-investment').innerText = totalTeamInvestment.toFixed(2);
-      document.getElementById('team-commission').innerText = parseFloat(usersDb[currentUser.username].referral_comm || 0).toFixed(2);
+      const teamCountEl = document.getElementById('team-count');
+      if (teamCountEl) teamCountEl.innerText = totalMembersCount;
 
-      document.getElementById('btn-team-all').innerText = `All Team (${totalMembersCount})`;
-      document.getElementById('btn-team-l1').innerText = `Level 1 (${l1.length})`;
-      document.getElementById('btn-team-l2').innerText = `Level 2 (${l2.length})`;
-      document.getElementById('btn-team-l3').innerText = `Level 3 (${l3.length})`;
+      const teamInvEl = document.getElementById('team-investment');
+      if (teamInvEl) teamInvEl.innerText = totalTeamInvestment.toFixed(2);
+
+      const actTeamMemEl = document.getElementById('act-team-members');
+      if (actTeamMemEl) actTeamMemEl.innerText = totalMembersCount;
+
+      const actTeamInvEl = document.getElementById('act-team-investment');
+      if (actTeamInvEl) actTeamInvEl.innerText = totalTeamInvestment.toFixed(2);
+
+      const teamCommEl = document.getElementById('team-commission');
+      if (teamCommEl) teamCommEl.innerText = parseFloat(usersDb[currentUser.username]?.referral_comm || 0).toFixed(2);
+
+      const btnAll = document.getElementById('btn-team-all');
+      if (btnAll) btnAll.innerText = `All Team (${totalMembersCount})`;
+
+      const btnL1 = document.getElementById('btn-team-l1');
+      if (btnL1) btnL1.innerText = `Level 1 (${l1.length})`;
+
+      const btnL2 = document.getElementById('btn-team-l2');
+      if (btnL2) btnL2.innerText = `Level 2 (${l2.length})`;
+
+      const btnL3 = document.getElementById('btn-team-l3');
+      if (btnL3) btnL3.innerText = `Level 3 (${l3.length})`;
     }
 
     function filterTeam(category) {
@@ -3102,25 +3215,31 @@
       
       let titleSuffix = "All";
       if (category === "all") {
-        document.getElementById('btn-team-all').classList.add('active');
+        const btnAll = document.getElementById('btn-team-all');
+        if (btnAll) btnAll.classList.add('active');
         titleSuffix = "All";
       } else if (category === "l1") {
-        document.getElementById('btn-team-l1').classList.add('active');
+        const btnL1 = document.getElementById('btn-team-l1');
+        if (btnL1) btnL1.classList.add('active');
         titleSuffix = "Level 1";
       } else if (category === "l2") {
-        document.getElementById('btn-team-l2').classList.add('active');
+        const btnL2 = document.getElementById('btn-team-l2');
+        if (btnL2) btnL2.classList.add('active');
         titleSuffix = "Level 2";
       } else if (category === "l3") {
-        document.getElementById('btn-team-l3').classList.add('active');
+        const btnL3 = document.getElementById('btn-team-l3');
+        if (btnL3) btnL3.classList.add('active');
         titleSuffix = "Level 3";
       }
 
-      document.getElementById('team-members-title-text').innerText = `Team Members (${titleSuffix})`;
+      const titleEl = document.getElementById('team-members-title-text');
+      if (titleEl) titleEl.innerText = `Team Members (${titleSuffix})`;
       renderTeamList();
     }
 
     function renderTeamList() {
       const container = document.getElementById('team-members-list');
+      if (!container) return;
       container.innerHTML = "";
 
       const { l1, l2, l3 } = getTeamData(currentUser.username);
@@ -3155,9 +3274,9 @@
 
       listToRender.forEach(u => {
         let personalInvestment = 0;
-        transactionsDb.forEach(t => {
-          if (t.user === u.username && t.type === 'deposit' && t.status === 'paid') {
-            personalInvestment += parseFloat(t.amountUsd);
+        (transactionsDb || []).forEach(t => {
+          if (t && t.user === u.username && t.type === 'deposit' && t.status === 'paid') {
+            personalInvestment += parseFloat(t.amountUsd || 0);
           }
         });
 
@@ -3166,7 +3285,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main);">${u.username}</h4>
-                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Phone: ${u.phone}</p>
+                <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">Phone: ${u.phone || 'N/A'}</p>
                 <span style="display: inline-block; font-size: 0.65rem; padding: 2px 8px; border-radius: 10px; background: rgba(56, 189, 248, 0.1); color: var(--dark-accent); font-weight: 700; margin-top: 6px;">
                   Level ${u.depthLevel} Referral
                 </span>
@@ -3260,9 +3379,10 @@
        =================================================================== */
     function renderPlans() {
       const container = document.getElementById('dynamic-plans-container');
+      if (!container) return;
       container.innerHTML = "";
 
-      if (plansDb.length === 0) {
+      if (!plansDb || plansDb.length === 0) {
         container.innerHTML = `
           <div class="card empty-state-box" style="margin-top: 30px;">
             <div class="empty-icon-circle"><i class="fa-solid fa-cloud-moon"></i></div>
@@ -3277,7 +3397,8 @@
 
       const currentRate = getPkrRate();
       plansDb.forEach((plan, i) => {
-        const returnTotal = parseFloat(plan.daily) * parseInt(plan.duration);
+        if (!plan) return;
+        const returnTotal = parseFloat(plan.daily || 0) * parseInt(plan.duration || 0);
         container.innerHTML += `
           <div class="package-card">
             ${i === 1 ? '<span class="badge-popular">MOST POPULAR</span>' : ''}
@@ -3285,13 +3406,13 @@
               <div class="pkg-icon-circle"><i class="fa-solid fa-chart-line"></i></div>
               <div>
                 <div class="pkg-title">${plan.name}</div>
-                <div class="pkg-price">$${parseFloat(plan.price).toFixed(2)}</div>
-                <div style="font-size:0.7rem; color: var(--text-muted);">≈ ${(parseFloat(plan.price)*currentRate).toLocaleString()} PKR</div>
+                <div class="pkg-price">$${parseFloat(plan.price || 0).toFixed(2)}</div>
+                <div style="font-size:0.7rem; color: var(--text-muted);">≈ ${(parseFloat(plan.price || 0)*currentRate).toLocaleString()} PKR</div>
               </div>
             </div>
             <div class="pkg-detail-line">
               <i class="fa-solid fa-circle-check" style="color:var(--accent-green);"></i> 
-              $${parseFloat(plan.daily).toFixed(2)} daily for ${plan.duration} days
+              $${parseFloat(plan.daily || 0).toFixed(2)} daily for ${plan.duration} days
             </div>
             <div class="pkg-stats-mini">
               Total returns: <b>$${returnTotal.toFixed(2)}</b> | Referral Tier L1: 4% ; L2: 2% ; L3: 1%
@@ -3304,10 +3425,11 @@
 
     function renderUserActivePlans() {
       const container = document.getElementById('user-active-plans-list');
+      if (!container) return;
       container.innerHTML = "";
 
       const userObj = usersDb[currentUser.username];
-      const activePlans = userObj.active_plans || [];
+      const activePlans = userObj ? userObj.active_plans || [] : [];
 
       if (activePlans.length === 0) {
         container.innerHTML = `
@@ -3324,10 +3446,11 @@
       }
 
       activePlans.forEach(plan => {
+        if (!plan) return;
         const dateStr = plan.dateInvested ? new Date(plan.dateInvested).toLocaleDateString() : 'N/A';
         const daysClaimed = plan.daysClaimed || 0;
-        const totalEarnedSoFar = daysClaimed * parseFloat(plan.daily);
-        const totalDuration = parseInt(plan.duration);
+        const totalEarnedSoFar = daysClaimed * parseFloat(plan.daily || 0);
+        const totalDuration = parseInt(plan.duration || 1);
         const progressPct = Math.min((daysClaimed / totalDuration) * 100, 100).toFixed(0);
 
         container.innerHTML += `
@@ -3347,11 +3470,11 @@
               </div>
               <div>
                 <p style="font-size:0.65rem; color:var(--text-muted);">Daily Yield</p>
-                <p style="font-size:0.8rem; font-weight:700; color:var(--accent-green);">$${parseFloat(plan.daily).toFixed(2)}</p>
+                <p style="font-size:0.8rem; font-weight:700; color:var(--accent-green);">$${parseFloat(plan.daily || 0).toFixed(2)}</p>
               </div>
               <div>
                 <p style="font-size:0.65rem; color:var(--text-muted);">Max Yield Potential</p>
-                <p style="font-size:0.8rem; font-weight:700; color:var(--text-main);">$${(parseFloat(plan.daily) * totalDuration).toFixed(2)}</p>
+                <p style="font-size:0.8rem; font-weight:700; color:var(--text-main);">$${(parseFloat(plan.daily || 0) * totalDuration).toFixed(2)}</p>
               </div>
               <div>
                 <p style="font-size:0.65rem; color:var(--text-muted);">Running Progress</p>
@@ -3372,13 +3495,14 @@
 
     function updateActivePlansHeader() {
       const userObj = usersDb[currentUser.username];
-      const activePlans = userObj.active_plans || [];
+      const activePlans = userObj ? userObj.active_plans || [] : [];
 
       let totalInvest = 0;
       let dailyEarnings = 0;
       let totalEarned = 0;
 
       activePlans.forEach(plan => {
+        if (!plan) return;
         totalInvest += parseFloat(plan.price || 0);
         dailyEarnings += parseFloat(plan.daily || 0);
         totalEarned += (plan.daysClaimed || 0) * parseFloat(plan.daily || 0);
@@ -3395,7 +3519,7 @@
       if (!container) return;
       container.innerHTML = "";
 
-      if (tasksDb.length === 0) {
+      if (!tasksDb || tasksDb.length === 0) {
         container.innerHTML = `
           <div class="card empty-state-box" style="margin: 0 16px;">
             <div class="empty-icon-circle"><i class="fa-solid fa-list-check"></i></div>
@@ -3412,15 +3536,16 @@
       const downlineUsernames = [...l1, ...l2, ...l3].map(u => u.username);
       
       let teamVolume = 0;
-      transactionsDb.forEach(t => {
-        if (t.type === 'deposit' && t.status === 'paid' && downlineUsernames.includes(t.user)) {
-          teamVolume += parseFloat(t.amountUsd);
+      (transactionsDb || []).forEach(t => {
+        if (t && t.type === 'deposit' && t.status === 'paid' && downlineUsernames.includes(t.user)) {
+          teamVolume += parseFloat(t.amountUsd || 0);
         }
       });
 
       tasksDb.forEach(t => {
-        const target = parseFloat(t.targetVolume);
-        const progressPct = Math.min((teamVolume / target) * 100, 100).toFixed(0);
+        if (!t) return;
+        const target = parseFloat(t.targetVolume || 0);
+        const progressPct = Math.min((teamVolume / (target || 1)) * 100, 100).toFixed(0);
         
         const isClaimed = currentUser.claimed_tasks && currentUser.claimed_tasks.includes(t.id);
         const canClaim = teamVolume >= target && !isClaimed;
@@ -3429,7 +3554,7 @@
         if (isClaimed) {
           taskActionHtml = `<button class="btn-keep-going" style="background: rgba(255,255,255,0.05); color: var(--text-muted); border-color: transparent;" disabled><i class="fa-solid fa-circle-check"></i> Reward Claimed</button>`;
         } else if (canClaim) {
-          taskActionHtml = `<button class="btn-primary" style="margin-top:0px; padding:10px; font-size:0.8rem; background: var(--accent-green);" onclick="claimTaskReward('${t.id}')">Claim $${parseFloat(t.reward).toFixed(2)} Reward</button>`;
+          taskActionHtml = `<button class="btn-primary" style="margin-top:0px; padding:10px; font-size:0.8rem; background: var(--accent-green);" onclick="claimTaskReward('${t.id}')">Claim $${parseFloat(t.reward || 0).toFixed(2)} Reward</button>`;
         } else {
           taskActionHtml = `<button class="btn-keep-going"><i class="fa-solid fa-clock"></i> Keep going ($${teamVolume.toFixed(2)} / $${target.toFixed(2)})</button>`;
         }
@@ -3438,7 +3563,7 @@
           <div class="task-card">
             <div class="task-header">
               <span class="task-title" style="font-weight: 800;">${t.title}</span>
-              <span class="task-reward" style="font-weight: 800; color: var(--accent-green);">$${parseFloat(t.reward).toFixed(2)}</span>
+              <span class="task-reward" style="font-weight: 800; color: var(--accent-green);">$${parseFloat(t.reward || 0).toFixed(2)}</span>
             </div>
             <div class="task-target">${t.description || `Target investment team volume: $${target.toFixed(2)}`}</div>
             <div class="progress-bar-bg"><div class="progress-bar-fill" style="width: ${progressPct}%"></div></div>
@@ -3449,18 +3574,20 @@
     }
 
     function claimTaskReward(taskId) {
-      const task = tasksDb.find(t => t.id === taskId);
+      const task = tasksDb.find(t => t && t.id === taskId);
       if (!task) return;
 
-      if (!currentUser.claimed_tasks) currentUser.claimed_tasks = [];
+      if (!currentUser.claimed_tasks || !Array.isArray(currentUser.claimed_tasks)) {
+        currentUser.claimed_tasks = [];
+      }
       if (currentUser.claimed_tasks.includes(taskId)) return;
 
       currentUser.claimed_tasks.push(taskId);
       usersDb[currentUser.username].claimed_tasks = currentUser.claimed_tasks;
 
       const currentRate = getPkrRate();
-      const rewardVal = parseFloat(task.reward);
-      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) + rewardVal;
+      const rewardVal = parseFloat(task.reward || 0);
+      usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance || 0) + rewardVal;
 
       transactionsDb.push({
         txId: "TASK_CR" + Date.now(),
@@ -3483,9 +3610,10 @@
 
     function renderHistory() {
       const listContainer = document.getElementById('user-history-list');
+      if (!listContainer) return;
       listContainer.innerHTML = "";
 
-      const myTxs = transactionsDb.filter(t => t.user === currentUser.username);
+      const myTxs = (transactionsDb || []).filter(t => t && t.user === currentUser.username);
 
       if (myTxs.length === 0) {
         listContainer.innerHTML = `
@@ -3504,19 +3632,19 @@
       let totalDeb = 0;
       let countPending = 0;
 
-      // Ensure consistent chronologic order (newest first for recent display)
       const sortedTxs = [...myTxs].reverse();
 
       sortedTxs.forEach(t => {
+        if (!t) return;
         if ((t.type === 'deposit' || t.type === 'promo_reward' || t.type === 'referral_comm' || t.type === 'earnings') && t.status === 'paid') {
-          totalCred += t.amountUsd;
+          totalCred += parseFloat(t.amountUsd || 0);
         }
         if (t.type === 'withdrawal' && t.status === 'paid') {
-          totalDeb += t.amountUsd;
+          totalDeb += parseFloat(t.amountUsd || 0);
         }
         if (t.status === 'pending') countPending++;
 
-        let displayStatus = t.status.toLowerCase();
+        let displayStatus = t.status ? t.status.toLowerCase() : 'pending';
         let statusBadgeColor = "orange";
         
         if (displayStatus === 'paid') {
@@ -3534,14 +3662,14 @@
           <div class="card" style="margin-bottom:10px; padding:15px">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <h4 style="font-size:0.9rem; text-transform:uppercase;">${t.type.replace('_', ' ')}</h4>
+                <h4 style="font-size:0.9rem; text-transform:uppercase;">${(t.type || '').replace('_', ' ')}</h4>
                 <p style="font-size:0.7rem; color:var(--text-muted)">${t.timestamp}</p>
                 <p style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">Ref: ${t.reference}</p>
               </div>
               <div style="text-align:right">
                 <span style="font-size:0.65rem; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,0.05); color:${statusBadgeColor}; font-weight:700;">${displayStatus}</span>
-                <h4 style="margin-top:6px; font-size:1rem">$${parseFloat(t.amountUsd).toFixed(2)}</h4>
-                <p style="font-size:0.7rem; color:var(--text-muted)">≈ ${parseFloat(t.amountPkr).toLocaleString()} PKR</p>
+                <h4 style="margin-top:6px; font-size:1rem">$${parseFloat(t.amountUsd || 0).toFixed(2)}</h4>
+                <p style="font-size:0.7rem; color:var(--text-muted)">≈ ${parseFloat(t.amountPkr || 0).toLocaleString()} PKR</p>
               </div>
             </div>
           </div>
@@ -3588,6 +3716,7 @@
     function updateProfileLayout() {
       if (!currentUser) return;
       const userObj = usersDb[currentUser.username];
+      if (!userObj) return;
       const selectedLogo = userObj.avatar;
 
       const activeFrame = document.getElementById('profile-active-avatar-wrap');
@@ -3602,13 +3731,13 @@
       document.getElementById('profile-id-display').innerText = `ID: ${userObj.uid}`;
       document.getElementById('profile-meta-id').innerText = userObj.uid;
       document.getElementById('profile-meta-phone').innerText = userObj.phone || 'N/A';
-      document.getElementById('profile-meta-balance').innerText = `$${parseFloat(userObj.balance).toFixed(2)}`;
+      document.getElementById('profile-meta-balance').innerText = `$${parseFloat(userObj.balance || 0).toFixed(2)}`;
 
       let totalEarningsValue = 0;
-      const myTxs = transactionsDb.filter(t => t.user === userObj.username);
+      const myTxs = (transactionsDb || []).filter(t => t && t.user === userObj.username);
       myTxs.forEach(t => {
         if ((t.type === 'earnings' || t.type === 'promo_reward' || t.type === 'referral_comm') && t.status === 'paid') {
-          totalEarningsValue += parseFloat(t.amountUsd);
+          totalEarningsValue += parseFloat(t.amountUsd || 0);
         }
       });
 
@@ -3632,9 +3761,10 @@
 
     function renderAdminDeposits() {
       const container = document.getElementById('admin-deposits-list');
+      if (!container) return;
       container.innerHTML = "";
 
-      const pendings = transactionsDb.filter(t => t.type === 'deposit' && t.status === 'pending');
+      const pendings = (transactionsDb || []).filter(t => t && t.type === 'deposit' && t.status === 'pending');
 
       if (pendings.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No pending deposit requests.</p>`;
@@ -3658,7 +3788,7 @@
                 <p style="font-size:0.85rem">User: <b style="color:var(--dark-accent)">${t.user}</b></p>
                 <p style="font-size:0.75rem">Plan: <b>${t.planName}</b> | Gateway: <b>${t.gateway}</b></p>
                 <p style="font-size:0.75rem; word-break:break-all; color: var(--text-sub);">Transaction ID: <b>${t.reference}</b></p>
-                <p style="font-size:0.9rem; font-weight:800; color:var(--accent-green); margin-top:4px;">$${t.amountUsd.toFixed(2)} (${t.amountPkr.toLocaleString()} PKR)</p>
+                <p style="font-size:0.9rem; font-weight:800; color:var(--accent-green); margin-top:4px;">$${parseFloat(t.amountUsd || 0).toFixed(2)} (${parseFloat(t.amountPkr || 0).toLocaleString()} PKR)</p>
               </div>
               <div style="display:flex; gap:6px;">
                 <button class="admin-action-btn admin-btn-approve" onclick="adminProcessDeposit('${t.txId}', 'approve')">Approve</button>
@@ -3673,7 +3803,7 @@
     }
 
     function adminProcessDeposit(txId, action) {
-      const txIndex = transactionsDb.findIndex(t => t.txId === txId);
+      const txIndex = transactionsDb.findIndex(t => t && t.txId === txId);
       if (txIndex === -1) return;
 
       const tx = transactionsDb[txIndex];
@@ -3683,7 +3813,7 @@
       if (action === 'approve') {
         transactionsDb[txIndex].status = "paid";
         
-        usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance) + parseFloat(tx.amountUsd);
+        usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance || 0) + parseFloat(tx.amountUsd);
         usersDb[targetUser].total_deposits = parseFloat(usersDb[targetUser].total_deposits || 0) + parseFloat(tx.amountUsd);
         
         if (!usersDb[targetUser].active_plans) usersDb[targetUser].active_plans = [];
@@ -3703,7 +3833,7 @@
         const parentL1 = usersDb[targetUser].referred_by;
         if (parentL1 && usersDb[parentL1]) {
           const l1Reward = parseFloat(tx.amountUsd) * 0.04;
-          usersDb[parentL1].balance = parseFloat(usersDb[parentL1].balance) + l1Reward;
+          usersDb[parentL1].balance = parseFloat(usersDb[parentL1].balance || 0) + l1Reward;
           usersDb[parentL1].referral_comm = parseFloat(usersDb[parentL1].referral_comm || 0) + l1Reward;
           
           transactionsDb.push({
@@ -3723,7 +3853,7 @@
           const parentL2 = usersDb[parentL1].referred_by;
           if (parentL2 && usersDb[parentL2]) {
             const l2Reward = parseFloat(tx.amountUsd) * 0.02;
-            usersDb[parentL2].balance = parseFloat(usersDb[parentL2].balance) + l2Reward;
+            usersDb[parentL2].balance = parseFloat(usersDb[parentL2].balance || 0) + l2Reward;
             usersDb[parentL2].referral_comm = parseFloat(usersDb[parentL2].referral_comm || 0) + l2Reward;
             
             transactionsDb.push({
@@ -3743,7 +3873,7 @@
             const parentL3 = usersDb[parentL2].referred_by;
             if (parentL3 && usersDb[parentL3]) {
               const l3Reward = parseFloat(tx.amountUsd) * 0.01;
-              usersDb[parentL3].balance = parseFloat(usersDb[parentL3].balance) + l3Reward;
+              usersDb[parentL3].balance = parseFloat(usersDb[parentL3].balance || 0) + l3Reward;
               usersDb[parentL3].referral_comm = parseFloat(usersDb[parentL3].referral_comm || 0) + l3Reward;
               
               transactionsDb.push({
@@ -3774,9 +3904,10 @@
 
     function renderAdminWithdrawals() {
       const container = document.getElementById('admin-withdraws-list');
+      if (!container) return;
       container.innerHTML = "";
 
-      const pendings = transactionsDb.filter(t => t.type === 'withdrawal' && t.status === 'pending');
+      const pendings = (transactionsDb || []).filter(t => t && t.type === 'withdrawal' && t.status === 'pending');
 
       if (pendings.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No pending withdrawal requests.</p>`;
@@ -3790,7 +3921,7 @@
               <p style="font-size:0.8rem">User: <b>${t.user}</b></p>
               <p style="font-size:0.7rem">Gateway: ${t.gateway}</p>
               <p style="font-size:0.7rem; word-break:break-all;">Details: ${t.reference}</p>
-              <p style="font-size:0.85rem; font-weight:700; color:#ef4444; margin-top:4px;">$${t.amountUsd.toFixed(2)} (${t.amountPkr.toLocaleString()} PKR)</p>
+              <p style="font-size:0.85rem; font-weight:700; color:#ef4444; margin-top:4px;">$${parseFloat(t.amountUsd || 0).toFixed(2)} (${parseFloat(t.amountPkr || 0).toLocaleString()} PKR)</p>
             </div>
             <div style="display:flex; flex-direction:column; gap:6px;">
               <button class="admin-action-btn admin-btn-approve" onclick="adminProcessWithdraw('${t.txId}', 'approve')">Paid</button>
@@ -3802,7 +3933,7 @@
     }
 
     function adminProcessWithdraw(txId, action) {
-      const txIndex = transactionsDb.findIndex(t => t.txId === txId);
+      const txIndex = transactionsDb.findIndex(t => t && t.txId === txId);
       if (txIndex === -1) return;
 
       const tx = transactionsDb[txIndex];
@@ -3814,7 +3945,7 @@
         addNotification(targetUser, `Withdrawal request for $${parseFloat(tx.amountUsd).toFixed(2)} is approved and processed.`);
       } else {
         transactionsDb[txIndex].status = "rejected";
-        usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance) + parseFloat(tx.amountUsd);
+        usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance || 0) + parseFloat(tx.amountUsd);
         addNotification(targetUser, `Your withdrawal request for $${parseFloat(tx.amountUsd).toFixed(2)} was rejected. Funds returned to balance.`);
       }
 
@@ -3844,19 +3975,21 @@
 
     function renderAdminPlans() {
       const container = document.getElementById('admin-plans-list');
+      if (!container) return;
       container.innerHTML = "";
 
-      if (plansDb.length === 0) {
+      if (!plansDb || plansDb.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No published plans exist.</p>`;
         return;
       }
 
       plansDb.forEach((p, i) => {
+        if (!p) return;
         container.innerHTML += `
           <div class="admin-item-row">
             <div>
               <p style="font-size:0.85rem"><b>${p.name}</b></p>
-              <p style="font-size:0.7rem">Cost: $${p.price.toFixed(2)} | Daily: $${p.daily.toFixed(2)} | Duration: ${p.duration} Days</p>
+              <p style="font-size:0.7rem">Cost: $${parseFloat(p.price || 0).toFixed(2)} | Daily: $${parseFloat(p.daily || 0).toFixed(2)} | Duration: ${p.duration} Days</p>
             </div>
             <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePlan(${i})">Remove</button>
           </div>
@@ -3897,14 +4030,14 @@
     }
 
     /* ===================================================================
-       ADMIN WITHDRAWAL LOCK SYSTEM ENGINE
+       ADMIN WITHDRAWAL LOCK SYSTEM ENGINE & USER MANAGEMENT
        =================================================================== */
     function renderAdminLocksList() {
       const container = document.getElementById('admin-locks-list');
       if (!container) return;
       container.innerHTML = "";
 
-      const users = Object.values(usersDb).filter(u => u.username !== "admin");
+      const users = Object.values(usersDb).filter(u => u && typeof u === 'object' && u.username && u.username !== "admin");
 
       if (users.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No registered users yet.</p>`;
@@ -3916,23 +4049,33 @@
         const directInvites = getTeamData(u.username).l1.length;
         
         container.innerHTML += `
-          <div class="admin-item-row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="admin-item-row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border-radius: 14px; border: 1px solid var(--input-border);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
               <div>
-                <p style="font-size:0.9rem">User: <b style="color:var(--dark-accent)">${u.username}</b></p>
-                <p style="font-size:0.75rem; color:var(--text-muted)">Current Direct Invites: <b>${directInvites}</b></p>
+                <p style="font-size:0.95rem; font-weight:700;">User: <b style="color:var(--dark-accent)">${u.username}</b></p>
+                <p style="font-size:0.75rem; color:var(--text-muted)">Phone: <b>${u.phone || 'N/A'}</b> | UID: <b>${u.uid || 'N/A'}</b></p>
+                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;">
+                  Bal: <b style="color:var(--accent-green)">$${parseFloat(u.balance || 0).toFixed(2)}</b> | Deposits: <b>$${parseFloat(u.total_deposits || 0).toFixed(2)}</b>
+                </p>
+                <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Referred By: <b>${u.referred_by || 'None'}</b> | Direct Invites: <b>${directInvites}</b></p>
               </div>
+              <div>
+                <button class="admin-action-btn admin-btn-reject" style="padding:6px 10px;" onclick="adminDeleteUser('${u.username}')">Delete User</button>
+              </div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
               <div style="display:flex; align-items:center; gap:6px;">
                 <input type="checkbox" id="lock-enabled-${u.username}" ${currentLock.enabled ? 'checked' : ''} style="transform: scale(1.2); cursor:pointer;">
                 <label for="lock-enabled-${u.username}" style="font-size:0.75rem; font-weight:700; cursor:pointer;">Enable Invite Lock</label>
               </div>
             </div>
-            
+
             <div style="display:flex; gap:10px; align-items:center;">
               <div class="input-group" style="margin-bottom:0; flex:1;">
                 <input type="number" id="lock-count-${u.username}" class="form-input" style="padding: 10px; padding-left: 15px; border-radius: 12px; font-size:0.8rem;" placeholder="Required Invites Count" value="${currentLock.requiredInvites || 0}">
               </div>
-              <button class="admin-action-btn admin-btn-approve" style="padding:10px 16px; border-radius:12px; font-weight:700;" onclick="adminSaveUserLock('${u.username}')">Save Lock Settings</button>
+              <button class="admin-action-btn admin-btn-approve" style="padding:10px 16px; border-radius:12px; font-weight:700;" onclick="adminSaveUserLock('${u.username}')">Save Lock</button>
             </div>
           </div>
         `;
@@ -3943,9 +4086,7 @@
       const enabled = document.getElementById(`lock-enabled-${username}`).checked;
       const requiredCount = parseInt(document.getElementById(`lock-count-${username}`).value) || 0;
 
-      if (!usersDb[username].withdrawalLock) {
-        usersDb[username].withdrawalLock = {};
-      }
+      if (!usersDb[username]) return;
 
       usersDb[username].withdrawalLock = {
         enabled: enabled,
@@ -3958,9 +4099,17 @@
         addNotification(username, `System Notice: Your withdrawal restriction lock has been deactivated. You can now standardly request withdrawals.`);
       }
 
-      saveState();
+      database.ref('trading_users/' + username + '/withdrawalLock').set(usersDb[username].withdrawalLock);
       renderAdminLocksList();
       alert(`Withdrawal restriction criteria saved for "${username}".`);
+    }
+
+    function adminDeleteUser(username) {
+      if (!confirm(`Are you sure you want to delete user account "${username}"? This cannot be undone.`)) return;
+      delete usersDb[username];
+      database.ref('trading_users/' + username).remove();
+      renderAdminLocksList();
+      alert(`User "${username}" has been deleted.`);
     }
 
     function adminCreatePromo(e) {
@@ -3969,7 +4118,7 @@
       const reward = parseFloat(document.getElementById('admin-promo-reward').value);
       const limit = parseInt(document.getElementById('admin-promo-limit').value);
 
-      const duplicatedIndex = promoDb.findIndex(p => p.code === code);
+      const duplicatedIndex = promoDb.findIndex(p => p && p.code === code);
       if (duplicatedIndex !== -1) {
         alert("This promo code already exists.");
         return;
@@ -3993,21 +4142,23 @@
 
     function renderAdminPromoList() {
       const container = document.getElementById('admin-promo-list');
+      if (!container) return;
       container.innerHTML = "";
 
-      if (promoDb.length === 0) {
+      if (!promoDb || promoDb.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No promo codes active.</p>`;
         return;
       }
 
       promoDb.forEach((p, i) => {
+        if (!p) return;
         const claimsCount = p.claimedBy ? p.claimedBy.length : 0;
         const totalLimit = p.memberLimit ? p.memberLimit : "Unlimited";
         container.innerHTML += `
           <div class="admin-item-row">
             <div>
               <p style="font-size:0.85rem">Code: <b>${p.code}</b></p>
-              <p style="font-size:0.7rem">Reward: $${parseFloat(p.reward).toFixed(2)} | Redemptions: ${claimsCount}/${totalLimit}</p>
+              <p style="font-size:0.7rem">Reward: $${parseFloat(p.reward || 0).toFixed(2)} | Redemptions: ${claimsCount}/${totalLimit}</p>
             </div>
             <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePromo(${i})">Delete</button>
           </div>
@@ -4049,20 +4200,22 @@
 
     function renderAdminTaskList() {
       const container = document.getElementById('admin-tasks-list');
+      if (!container) return;
       container.innerHTML = "";
 
-      if (tasksDb.length === 0) {
+      if (!tasksDb || tasksDb.length === 0) {
         container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No active tasks configured.</p>`;
         return;
       }
 
       tasksDb.forEach(t => {
+        if (!t) return;
         container.innerHTML += `
           <div class="admin-item-row">
             <div>
               <p style="font-size:0.85rem"><b>${t.title}</b></p>
-              <p style="font-size:0.7rem">Target Volume: $${parseFloat(t.targetVolume).toFixed(2)} | Reward: $${parseFloat(t.reward).toFixed(2)}</p>
-              <p style="font-size:0.75rem; color: var(--text-muted);">${t.description}</p>
+              <p style="font-size:0.7rem">Target Volume: $${parseFloat(t.targetVolume || 0).toFixed(2)} | Reward: $${parseFloat(t.reward || 0).toFixed(2)}</p>
+              <p style="font-size:0.75rem; color: var(--text-muted);">${t.description || ''}</p>
             </div>
             <button class="admin-action-btn admin-btn-reject" onclick="adminDeleteTask('${t.id}')">Delete</button>
           </div>
@@ -4071,7 +4224,7 @@
     }
 
     function adminDeleteTask(id) {
-      tasksDb = tasksDb.filter(t => t.id !== id);
+      tasksDb = tasksDb.filter(t => t && t.id !== id);
       database.ref('trading_tasks').set(tasksDb);
       renderAdminTaskList();
     }
