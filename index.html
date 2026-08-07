@@ -977,105 +977,65 @@
        11. PAYMENT DEPOSIT SCREENSHOT SUBMISSION STYLES
        ========================================================================== */
     .deposit-screen-container {
-      background: linear-gradient(180deg, #02472b 0%, #012b1a 100%);
+      background: var(--card-bg);
       border-radius: 20px;
       padding: 20px 16px;
-      color: #ffffff;
+      color: var(--text-main);
       text-align: left;
     }
     .deposit-input-box {
       width: 100%;
       padding: 16px 20px;
-      background: #01321d;
-      border: 1px solid #10b981;
-      border-radius: 18px;
-      color: #ffffff;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      color: var(--text-main);
       font-size: 1.05rem;
       outline: none;
     }
     .deposit-input-box::placeholder {
-      color: #058552;
+      color: var(--text-muted);
     }
     .upload-box-container {
-      border: 2px dashed rgba(255, 255, 255, 0.6);
-      border-radius: 24px;
-      padding: 30px 16px;
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
+      padding: 40px 16px;
       text-align: center;
       cursor: pointer;
-      background: rgba(1, 50, 29, 0.5);
+      background: transparent;
       transition: all 0.2s ease;
-      margin-top: 18px;
+      margin-top: 8px;
       margin-bottom: 18px;
       position: relative;
-    }
-    .upload-circle-btn {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 16px;
-      color: #ffffff;
-      font-size: 2.2rem;
-      position: relative;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
-    }
-    .upload-circle-btn .plus-icon-badge {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #ffffff;
-      color: #059669;
-      font-size: 0.85rem;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #059669;
-    }
-    .upload-text-main {
-      font-size: 1.25rem;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 6px;
-    }
-    .upload-text-sub {
-      font-size: 0.95rem;
-      color: rgba(255, 255, 255, 0.75);
     }
     .upload-progress-track {
       width: 100%;
       height: 6px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
       overflow: hidden;
       margin-top: 16px;
     }
     .upload-progress-fill {
       height: 100%;
-      background: #10b981;
+      background: #3b82f6;
       width: 0%;
       transition: width 0.2s ease;
     }
-    .btn-green-submit {
+    .btn-deposit-submit {
       width: 100%;
       padding: 16px;
-      background: #ffffff;
-      color: #02472b;
+      background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+      color: #ffffff;
       border: none;
-      border-radius: 35px;
-      font-size: 1.2rem;
-      font-weight: 800;
+      border-radius: 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
       cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
       transition: all 0.2s ease;
     }
-    .btn-green-submit:active {
+    .btn-deposit-submit:active {
       transform: scale(0.98);
     }
 
@@ -1319,7 +1279,7 @@
       <h3 class="resources-title">Resources</h3>
       <div class="card" style="padding: 14px;">
         <div class="resources-grid">
-          <div class="btn-resource" onclick="switchTab('rewards-view')"><i class="fa-solid fa-ticket"></i> Redeem Code</div>
+          <div class="btn-resource" onclick="switchTab('rewards-view')"><i class="fa-solid fa-ticket"></i> Promo Code</div>
           <div class="btn-resource" onclick="openWhatsAppAdmin()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Admin</div>
           <div class="btn-resource" onclick="openWhatsAppChannel()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Channel</div>
           <div class="btn-resource" onclick="openFbrModal()"><i class="fa-solid fa-building"></i> FBR</div>
@@ -1669,11 +1629,9 @@
       </div>
 
       <!-- Profile Cover Banner & Details Card (Updated layout per request) -->
-      <div class="card" style="text-align: center; position: relative; overflow: hidden; padding-top: 0;">
-        <div style="height: 90px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); margin: -20px -20px 0 -20px; position: relative;">
-        </div>
-
-        <div id="profile-active-avatar-wrap" style="width: 90px; height: 90px; margin: -45px auto 12px; border-radius: 50%; box-shadow: 0 6px 20px rgba(0,0,0,0.6); overflow: hidden; cursor: pointer; border: 3px solid var(--dark-accent); background: var(--card-bg); display: flex; align-items: center; justify-content: center;" onclick="triggerProfileImageUpload()">
+      <div class="card" style="text-align: center; position: relative; padding-top: 20px;">
+        
+        <div id="profile-active-avatar-wrap" style="width: 90px; height: 90px; margin: 0 auto 12px; border-radius: 50%; overflow: hidden; cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center;" onclick="triggerProfileImageUpload()">
           <!-- Displays Cloudinary uploaded profile picture or user icon -->
         </div>
         <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-bottom: 14px; cursor: pointer;" onclick="triggerProfileImageUpload()"><i class="fa-solid fa-camera" style="color: var(--dark-accent);"></i> Tap picture to update photo</p>
@@ -2017,24 +1975,26 @@
     let promoDb = [];
     let tasksDb = [];
     let configDb = {};
+    let isFirstLoad = true;
 
     // Get current PKR Rate dynamically from configDb or default to 300
     function getPkrRate() {
       return parseFloat(configDb.pkr_rate) || 300;
     }
 
-    // Load initial nodes from remote Firebase RTDB 
+    // Real-Time Database sync loader replacing manual boot loading
     window.addEventListener('DOMContentLoaded', () => {
-      database.ref('/').once('value').then(snapshot => {
+      database.ref('/').on('value', snapshot => {
         const rootData = snapshot.val() || {};
         
         usersDb = rootData.trading_users || {};
-        plansDb = rootData.trading_plans || [];
-        transactionsDb = rootData.trading_tx || [];
-        promoDb = rootData.trading_promo || [
+        // Safeguard for Firebase removing empty arrays or translating them to objects
+        plansDb = rootData.trading_plans ? (Array.isArray(rootData.trading_plans) ? rootData.trading_plans : Object.values(rootData.trading_plans)) : [];
+        transactionsDb = rootData.trading_tx ? (Array.isArray(rootData.trading_tx) ? rootData.trading_tx : Object.values(rootData.trading_tx)) : [];
+        promoDb = rootData.trading_promo ? (Array.isArray(rootData.trading_promo) ? rootData.trading_promo : Object.values(rootData.trading_promo)) : [
           { code: "WELCOME10", reward: 10, memberLimit: 50, claimedBy: [] }
         ];
-        tasksDb = rootData.trading_tasks || [];
+        tasksDb = rootData.trading_tasks ? (Array.isArray(rootData.trading_tasks) ? rootData.trading_tasks : Object.values(rootData.trading_tasks)) : [];
         configDb = rootData.trading_config || {
           pkr_rate: 300,
           whatsapp_admin: "",
@@ -2046,22 +2006,48 @@
           usdt_addr: "0x1234567890abcdef1234567890abcdef12345678"
         };
 
-        // Ensure default PKR rate is 300 if not set
         if (!configDb.pkr_rate) configDb.pkr_rate = 300;
 
-        // Deactivate loading panel
-        const loadingOverlay = document.getElementById('loading-overlay');
-        if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        // Perform initial boot actions on very first payload return
+        if (isFirstLoad) {
+          isFirstLoad = false;
+          const loadingOverlay = document.getElementById('loading-overlay');
+          if (loadingOverlay) loadingOverlay.classList.add('hidden');
 
-        // Check for active browser session persistence
-        const sessionUser = localStorage.getItem('logged_in_user');
-        if (sessionUser && usersDb[sessionUser]) {
-          enterApp(sessionUser);
+          const sessionUser = localStorage.getItem('logged_in_user');
+          if (sessionUser && sessionUser === 'admin') {
+            currentUser = { username: "admin", isAdmin: true };
+            enterAdminPanel();
+          } else if (sessionUser && usersDb[sessionUser]) {
+            enterApp(sessionUser);
+          }
+        } else {
+          // Hot reload UI components due to real-time update triggers
+          if (currentUser) {
+            if (currentUser.isAdmin) {
+              if (!document.getElementById('admin-deposit-tab').classList.contains('hidden')) renderAdminDeposits();
+              if (!document.getElementById('admin-withdraw-tab').classList.contains('hidden')) renderAdminWithdrawals();
+              if (!document.getElementById('admin-plans-tab').classList.contains('hidden')) renderAdminPlans();
+              if (!document.getElementById('admin-locks-tab').classList.contains('hidden')) renderAdminLocksList();
+              if (!document.getElementById('admin-promo-tab').classList.contains('hidden')) renderAdminPromoList();
+              if (!document.getElementById('admin-tasks-tab').classList.contains('hidden')) renderAdminTaskList();
+            } else {
+              if (usersDb[currentUser.username]) {
+                currentUser = usersDb[currentUser.username]; // Resync specific user details
+                updateDashboardData();
+                if (!document.getElementById('earning-history-view').classList.contains('hidden')) renderHistory();
+                if (!document.getElementById('active-plans-view').classList.contains('hidden')) {
+                  renderUserActivePlans();
+                  updateActivePlansHeader();
+                }
+                if (!document.getElementById('profile-view').classList.contains('hidden')) updateProfileLayout();
+                if (!document.getElementById('team-view').classList.contains('hidden')) updateTeamMetrics();
+                if (!document.getElementById('plans-view').classList.contains('hidden')) renderPlans();
+                if (!document.getElementById('rewards-view').classList.contains('hidden')) renderUserTasks();
+              }
+            }
+          }
         }
-      }).catch(err => {
-        console.error("Firebase Database bootstrap failure:", err);
-        alert("Failed to initialize database connection. Running with offline fallbacks.");
-        document.getElementById('loading-overlay').classList.add('hidden');
       });
 
       toggleDrawer(false);
@@ -2177,7 +2163,6 @@
       database.ref('trading_promo').set(promoDb);
       database.ref('trading_config').set(configDb);
       database.ref('trading_tasks').set(tasksDb);
-      updateDashboardData();
     }
 
     // Tab Navigation Switcher
@@ -2339,6 +2324,7 @@
 
       if (user === "admin" && pass === "admin") {
         currentUser = { username: "admin", isAdmin: true };
+        localStorage.setItem('logged_in_user', 'admin');
         enterAdminPanel();
         return;
       }
@@ -2557,25 +2543,25 @@
 
       if (gateway === 'easypaisa') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+          <div style="background: var(--input-bg); padding:12px; border: 1px solid var(--input-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color: var(--text-main);">
             <p><strong>Method:</strong> EasyPaisa Account</p>
-            <p><strong>Account Number:</strong> <b style="color: #10b981">${configDb.easypaisa_num || "03123456789"}</b></p>
+            <p><strong>Account Number:</strong> <b style="color: var(--dark-accent)">${configDb.easypaisa_num || "03123456789"}</b></p>
             <p><strong>Account Holder:</strong> <b>${configDb.easypaisa_name || "John Doe"}</b></p>
           </div>
         `;
       } else if (gateway === 'jazzcash') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+          <div style="background: var(--input-bg); padding:12px; border: 1px solid var(--input-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color: var(--text-main);">
             <p><strong>Method:</strong> JazzCash Account</p>
-            <p><strong>Account Number:</strong> <b style="color: #10b981">${configDb.jazzcash_num || "03001234567"}</b></p>
+            <p><strong>Account Number:</strong> <b style="color: var(--dark-accent)">${configDb.jazzcash_num || "03001234567"}</b></p>
             <p><strong>Account Holder:</strong> <b>${configDb.jazzcash_name || "Jane Smith"}</b></p>
           </div>
         `;
       } else if (gateway === 'usdt') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+          <div style="background: var(--input-bg); padding:12px; border: 1px solid var(--input-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color: var(--text-main);">
             <p><strong>Method:</strong> USDT BEP20 Smart Chain</p>
-            <p style="word-break: break-all;"><strong>Address:</strong> <b style="color: #10b981">${configDb.usdt_addr || "0x123..."}</b></p>
+            <p style="word-break: break-all;"><strong>Address:</strong> <b style="color: var(--dark-accent)">${configDb.usdt_addr || "0x123..."}</b></p>
           </div>
         `;
       }
@@ -2584,47 +2570,53 @@
       modalInner.innerHTML = `
         <div class="deposit-screen-container">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <h3 style="font-size:1.15rem; font-weight:800; color:#ffffff;">Submit Payment</h3>
-            <span style="font-size:0.8rem; color:#10b981; font-weight:700;">$${parseFloat(plan.price).toFixed(2)} ≈ ${pkrPrice} PKR</span>
+            <h3 style="font-size:1.15rem; font-weight:800; color:var(--text-main);">Submit Payment</h3>
+            <span style="font-size:0.8rem; color:var(--dark-accent); font-weight:700;">$${parseFloat(plan.price).toFixed(2)} ≈ ${pkrPrice} PKR</span>
           </div>
 
           ${payDetailsHtml}
 
           <form onsubmit="submitDepositRequest(event, ${planIndex}, '${gateway}')">
             <!-- Label 1: Transaction ID -->
-            <label style="font-size:0.95rem; font-weight:700; color:#ffffff; display:block; margin-bottom:8px;">Transaction ID</label>
+            <label style="font-size:0.95rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:8px;">Transaction ID</label>
             <div style="margin-bottom:18px;">
               <input type="text" id="deposit-txid" class="deposit-input-box" placeholder="Enter transaction ID" required>
             </div>
 
-            <!-- Dashboard Box 2: Screenshot Upload Container -->
+            <!-- Label 2: Payment screenshot * -->
+            <label style="font-size:0.95rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:8px;">Payment screenshot <span style="color: #ef4444;">*</span></label>
+            
+            <!-- Dashboard Box 2: Screenshot Upload Container matching exact screenshot design -->
             <div class="upload-box-container" onclick="document.getElementById('deposit-screenshot-input').click()">
-              <div class="upload-circle-btn">
-                <i class="fa-regular fa-file-image"></i>
-                <div class="plus-icon-badge">+</div>
+              
+              <!-- Cloud Icon -->
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 2.5rem; color: #cbd5e1; margin-bottom: 16px;"></i>
+              
+              <div class="upload-text-main" id="upload-box-main-text" style="font-size: 1rem; font-weight: 500; color: var(--text-main); margin-bottom: 8px;">
+                <span style="color: #3b82f6; font-weight: 600;">Click to upload</span> or drag and drop
+              </div>
+              <div class="upload-text-sub" id="upload-box-sub-text" style="font-size: 0.8rem; color: #94a3b8;">
+                Supported: .jpg, .jpeg, .png
               </div>
 
-              <div class="upload-text-main" id="upload-box-main-text">Tap to upload screenshot</div>
-              <div class="upload-text-sub" id="upload-box-sub-text">PNG, JPG or JPEG</div>
-
               <!-- Selected Image Preview Container -->
-              <div id="screenshot-preview-wrapper" class="hidden" style="margin-top: 12px;">
-                <img id="screenshot-preview-img" style="max-width: 100%; max-height: 140px; border-radius: 12px; border: 1px solid #10b981;">
+              <div id="screenshot-preview-wrapper" class="hidden" style="margin-top: 16px;">
+                <img id="screenshot-preview-img" style="max-width: 100%; max-height: 140px; border-radius: 8px; border: 1px solid var(--input-border);">
               </div>
 
               <!-- Real-time Progress Bar -->
-              <div class="upload-progress-track">
+              <div class="upload-progress-track" id="deposit-progress-container" style="display: none;">
                 <div class="upload-progress-fill" id="deposit-upload-bar-fill"></div>
               </div>
-              <div style="text-align: right; font-size: 0.8rem; font-weight: 700; color: #10b981; margin-top: 4px;" id="deposit-upload-percent-text">0%</div>
+              <div style="text-align: right; font-size: 0.8rem; font-weight: 700; color: #3b82f6; margin-top: 4px; display: none;" id="deposit-upload-percent-text">0%</div>
 
               <input type="file" id="deposit-screenshot-input" accept="image/png, image/jpeg, image/jpg" class="hidden" required onchange="handleScreenshotFileChange(event)">
             </div>
 
-            <button type="submit" id="btn-submit-payment-dep" class="btn-green-submit">Submit Payment</button>
+            <button type="submit" id="btn-submit-payment-dep" class="btn-deposit-submit">Deposit Now</button>
           </form>
           
-          <button class="btn-primary" style="background:#01321d; color:#ffffff; border: 1px solid #058552; margin-top:12px;" onclick="closeWorkflowModal()">Cancel</button>
+          <button class="btn-primary" style="background: transparent; color: var(--text-muted); border: none; margin-top:12px; box-shadow: none;" onclick="closeWorkflowModal()">Cancel</button>
         </div>
       `;
     }
@@ -2636,7 +2628,7 @@
 
       selectedDepositScreenshotFile = file;
 
-      document.getElementById('upload-box-main-text').innerText = file.name;
+      document.getElementById('upload-box-main-text').innerHTML = `<span style="color: #3b82f6; font-weight: 600;">Selected:</span> ${file.name}`;
       document.getElementById('upload-box-sub-text').innerText = `${(file.size / 1024).toFixed(1)} KB (Ready to upload)`;
 
       const reader = new FileReader();
@@ -2673,12 +2665,16 @@
         submitBtn.innerText = "Uploading Proof...";
       }
 
+      const progContainer = document.getElementById('deposit-progress-container');
+      const progText = document.getElementById('deposit-upload-percent-text');
+      if (progContainer) progContainer.style.display = 'block';
+      if (progText) progText.style.display = 'block';
+
       // Upload to Cloudinary with real-time percentage progress updates
       const uploadedScreenshotUrl = await uploadImageToCloudinary(selectedDepositScreenshotFile, (percent) => {
         const fillBar = document.getElementById('deposit-upload-bar-fill');
-        const percentText = document.getElementById('deposit-upload-percent-text');
         if (fillBar) fillBar.style.width = `${percent}%`;
-        if (percentText) percentText.innerText = `${percent}%`;
+        if (progText) progText.innerText = `${percent}%`;
       });
 
       const currentRate = getPkrRate();
@@ -3508,7 +3504,10 @@
       let totalDeb = 0;
       let countPending = 0;
 
-      myTxs.forEach(t => {
+      // Ensure consistent chronologic order (newest first for recent display)
+      const sortedTxs = [...myTxs].reverse();
+
+      sortedTxs.forEach(t => {
         if ((t.type === 'deposit' || t.type === 'promo_reward' || t.type === 'referral_comm' || t.type === 'earnings') && t.status === 'paid') {
           totalCred += t.amountUsd;
         }
@@ -3517,20 +3516,30 @@
         }
         if (t.status === 'pending') countPending++;
 
+        let displayStatus = t.status.toLowerCase();
         let statusBadgeColor = "orange";
-        if (t.status === 'paid') statusBadgeColor = "#10b981";
-        if (t.status === 'rejected') statusBadgeColor = "#ef4444";
+        
+        if (displayStatus === 'paid') {
+            statusBadgeColor = "#10b981";
+            displayStatus = 'Completed';
+        } else if (displayStatus === 'rejected') {
+            statusBadgeColor = "#ef4444";
+            displayStatus = 'Rejected';
+        } else if (displayStatus === 'pending') {
+            statusBadgeColor = "#fbbf24";
+            displayStatus = 'Pending';
+        }
 
         listContainer.innerHTML += `
           <div class="card" style="margin-bottom:10px; padding:15px">
             <div style="display:flex; justify-content:space-between; align-items:center;">
               <div>
-                <h4 style="font-size:0.9rem; text-transform:uppercase;">${t.type}</h4>
+                <h4 style="font-size:0.9rem; text-transform:uppercase;">${t.type.replace('_', ' ')}</h4>
                 <p style="font-size:0.7rem; color:var(--text-muted)">${t.timestamp}</p>
                 <p style="font-size:0.75rem; color:var(--text-sub); margin-top:4px;">Ref: ${t.reference}</p>
               </div>
               <div style="text-align:right">
-                <span style="font-size:0.65rem; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,0.05); color:${statusBadgeColor}; font-weight:700;">${t.status}</span>
+                <span style="font-size:0.65rem; padding:3px 8px; border-radius:10px; background:rgba(255,255,255,0.05); color:${statusBadgeColor}; font-weight:700;">${displayStatus}</span>
                 <h4 style="margin-top:6px; font-size:1rem">$${parseFloat(t.amountUsd).toFixed(2)}</h4>
                 <p style="font-size:0.7rem; color:var(--text-muted)">≈ ${parseFloat(t.amountPkr).toLocaleString()} PKR</p>
               </div>
@@ -3586,7 +3595,7 @@
         if (selectedLogo && (selectedLogo.startsWith('http') || selectedLogo.startsWith('data:image'))) {
           activeFrame.innerHTML = `<img src="${selectedLogo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
         } else {
-          activeFrame.innerHTML = `<i class="fa-solid fa-user" style="font-size: 2.2rem; color: var(--dark-accent);"></i>`;
+          activeFrame.innerHTML = `<i class="fa-solid fa-user" style="font-size: 2.2rem; color: var(--text-muted);"></i>`;
         }
       }
 
