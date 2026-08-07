@@ -3772,9 +3772,10 @@
       if (action === 'approve') {
         transactionsDb[txIndex].status = "paid";
         
-        // Deposit directly activates the investment plan without crediting the main balance
+        // Update cumulative deposit statistics
         usersDb[targetUser].total_deposits = parseFloat(usersDb[targetUser].total_deposits || 0) + parseFloat(tx.amountUsd);
         
+        // Upgrade / Activate investment plan ONLY (User's main balance is NOT updated on deposit)
         if (!usersDb[targetUser].active_plans) usersDb[targetUser].active_plans = [];
         usersDb[targetUser].active_plans.push({
           name: tx.planName || "Investment Package",
@@ -4243,3 +4244,4 @@
   </script>
 </body>
 </html>
+            
