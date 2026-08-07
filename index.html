@@ -973,15 +973,110 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
 
-    /* Profile Avatar Select Options */
-    .avatar-select-option {
-      transition: all 0.25s ease;
-      background: rgba(255, 255, 255, 0.03);
-      border: 2px solid transparent;
+    /* ==========================================================================
+       11. PAYMENT DEPOSIT SCREENSHOT SUBMISSION STYLES
+       ========================================================================== */
+    .deposit-screen-container {
+      background: linear-gradient(180deg, #02472b 0%, #012b1a 100%);
+      border-radius: 20px;
+      padding: 20px 16px;
+      color: #ffffff;
+      text-align: left;
     }
-    .avatar-select-option:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    .deposit-input-box {
+      width: 100%;
+      padding: 16px 20px;
+      background: #01321d;
+      border: 1px solid #10b981;
+      border-radius: 18px;
+      color: #ffffff;
+      font-size: 1.05rem;
+      outline: none;
+    }
+    .deposit-input-box::placeholder {
+      color: #058552;
+    }
+    .upload-box-container {
+      border: 2px dashed rgba(255, 255, 255, 0.6);
+      border-radius: 24px;
+      padding: 30px 16px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(1, 50, 29, 0.5);
+      transition: all 0.2s ease;
+      margin-top: 18px;
+      margin-bottom: 18px;
+      position: relative;
+    }
+    .upload-circle-btn {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #10b981 0%, #059669 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      color: #ffffff;
+      font-size: 2.2rem;
+      position: relative;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+    .upload-circle-btn .plus-icon-badge {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #059669;
+      font-size: 0.85rem;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #059669;
+    }
+    .upload-text-main {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .upload-text-sub {
+      font-size: 0.95rem;
+      color: rgba(255, 255, 255, 0.75);
+    }
+    .upload-progress-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .upload-progress-fill {
+      height: 100%;
+      background: #10b981;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+    .btn-green-submit {
+      width: 100%;
+      padding: 16px;
+      background: #ffffff;
+      color: #02472b;
+      border: none;
+      border-radius: 35px;
+      font-size: 1.2rem;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      transition: all 0.2s ease;
+    }
+    .btn-green-submit:active {
+      transform: scale(0.98);
     }
 
     /* ==========================================================================
@@ -1144,7 +1239,6 @@
       <div class="top-user-bar">
         <div class="user-info">
           <div class="btn-icon-circle" onclick="toggleDrawer(true)"><i class="fa-solid fa-bars"></i></div>
-          <!-- Standard Profile icon used on dashboard page. The personalized custom avatar only reveals itself on the Profile Tab. -->
           <div class="btn-icon-circle" onclick="switchTab('profile-view')" style="cursor: pointer;">
             <i class="fa-solid fa-user"></i>
           </div>
@@ -1173,17 +1267,12 @@
           ≈ <span id="user-balance-pkr">0.00</span> PKR
         </div>
 
-        <!-- Wallet Image Graphic (Custom High Visibility Matte Layout) -->
+        <!-- Wallet Image Graphic -->
         <svg class="balance-wallet-img" viewBox="0 0 100 100" fill="none" style="border: 2px solid rgba(56, 189, 248, 0.5); border-radius: 16px; background: rgba(9, 29, 54, 0.9); padding: 6px;">
-          <!-- Wallet Base Shell -->
           <rect x="8" y="22" width="84" height="56" rx="12" fill="#0b2545" stroke="var(--dark-accent)" stroke-width="3"/>
-          <!-- Inner Pocket Fold -->
           <path d="M48 22H84V78H48" fill="#020c1a" stroke="var(--dark-accent)" stroke-width="2" stroke-dasharray="2 2"/>
-          <!-- Lock Button Solid Accent -->
           <circle cx="68" cy="50" r="10" fill="#fbbf24" stroke="#ffffff" stroke-width="1.5"/>
-          <!-- Currency Embossing on Lock -->
           <path d="M68 45V55M65 48H71M65 52H71" stroke="#021226" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Credit Cards Peeking Out -->
           <path d="M18 22V14C18 12 20 10 22 10H50C52 10 54 12 54 14V22" stroke="#fbbf24" stroke-width="3" stroke-linecap="round"/>
           <path d="M30 22V17C30 15 32 14 34 14H64C66 14 68 15 68 17V22" stroke="#38bdf8" stroke-width="3" stroke-linecap="round"/>
         </svg>
@@ -1226,14 +1315,14 @@
         </div>
       </div>
 
-      <!-- Resources Section -->
+      <!-- Resources Section (Updated per requirements) -->
       <h3 class="resources-title">Resources</h3>
       <div class="card" style="padding: 14px;">
         <div class="resources-grid">
-          <div class="btn-resource"><i class="fa-solid fa-mobile-screen"></i> App Download</div>
-          <div class="btn-resource"><i class="fa-brands fa-whatsapp"></i> WhatsApp Admin</div>
-          <div class="btn-resource"><i class="fa-brands fa-whatsapp"></i> WhatsApp Channel</div>
-          <div class="btn-resource"><i class="fa-solid fa-building"></i> FBR</div>
+          <div class="btn-resource" onclick="switchTab('rewards-view')"><i class="fa-solid fa-ticket"></i> Redeem Code</div>
+          <div class="btn-resource" onclick="openWhatsAppAdmin()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Admin</div>
+          <div class="btn-resource" onclick="openWhatsAppChannel()"><i class="fa-brands fa-whatsapp"></i> WhatsApp Channel</div>
+          <div class="btn-resource" onclick="openFbrModal()"><i class="fa-solid fa-building"></i> FBR</div>
         </div>
       </div>
 
@@ -1449,7 +1538,7 @@
 
 
     <!-- ===================================================================
-         VIEW 4: REWARDS CENTER (WITH PROMO CODE INTEGRATION)
+         VIEW 4: REWARDS CENTER
          =================================================================== -->
     <div id="rewards-view" class="hidden">
       <div class="app-header">
@@ -1457,7 +1546,7 @@
           <div class="btn-icon-circle" onclick="switchTab('home-view')"><i class="fa-solid fa-arrow-left"></i></div>
           <div class="header-title-text">
             <h2>Rewards Center</h2>
-            <p>Complete tasks and earn more</p>
+            <p>Complete tasks and redeem codes</p>
           </div>
         </div>
       </div>
@@ -1579,40 +1668,22 @@
         </div>
       </div>
 
-      <!-- Main Profile Banner Details Card -->
-      <div class="card" style="text-align: center;">
-        <!-- The custom animated avatar ONLY reveals itself inside the Profile screen -->
-        <div id="profile-active-avatar-wrap" style="width: 84px; height: 84px; margin: 0 auto 12px; border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.4); overflow: hidden; cursor: pointer;" onclick="toggleAvatarSelectionPanel()">
-          <!-- Display selected beautiful avatar logo dynamically -->
+      <!-- Profile Cover Banner & Details Card (Updated layout per request) -->
+      <div class="card" style="text-align: center; position: relative; overflow: hidden; padding-top: 0;">
+        <div style="height: 90px; background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); margin: -20px -20px 0 -20px; position: relative;">
         </div>
-        <p style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-bottom: 14px;"><i class="fa-solid fa-camera"></i> Click photo to select avatar</p>
+
+        <div id="profile-active-avatar-wrap" style="width: 90px; height: 90px; margin: -45px auto 12px; border-radius: 50%; box-shadow: 0 6px 20px rgba(0,0,0,0.6); overflow: hidden; cursor: pointer; border: 3px solid var(--dark-accent); background: var(--card-bg); display: flex; align-items: center; justify-content: center;" onclick="triggerProfileImageUpload()">
+          <!-- Displays Cloudinary uploaded profile picture or user icon -->
+        </div>
+        <p style="font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-bottom: 14px; cursor: pointer;" onclick="triggerProfileImageUpload()"><i class="fa-solid fa-camera" style="color: var(--dark-accent);"></i> Tap picture to update photo</p>
         
         <h3 id="profile-username" style="color: var(--text-main); font-size: 1.25rem;">User</h3>
         <p id="profile-id-display" style="font-size: 0.75rem; color: var(--text-muted); font-weight: 700; font-family: monospace; letter-spacing: 0.5px; margin-top: 2px;">ID: 10001</p>
         <p style="font-size:0.75rem; color: var(--accent-green); font-weight:700; margin-top: 6px;"><i class="fa-solid fa-circle-check"></i> Account Status: Active Investor</p>
 
-        <!-- Dynamic Avatar Selector List (Hidden by default, shown ONLY when user clicks on their profile picture to change it) -->
-        <div id="avatar-selection-panel" class="hidden" style="margin-top: 20px; border-top: 1px solid var(--card-border); padding-top: 16px;">
-          <h4 style="font-size: 0.8rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px;">Choose Avatar Portfolio</h4>
-          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 0 10px;">
-            <div class="avatar-select-option" onclick="changeUserAvatar('male')" style="cursor: pointer; border-radius: 14px; padding: 6px; text-align: center;">
-              <div style="width: 100%; height: auto; margin-bottom: 4px;" id="opt-logo-male"></div>
-              <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">Male</span>
-            </div>
-            <div class="avatar-select-option" onclick="changeUserAvatar('female')" style="cursor: pointer; border-radius: 14px; padding: 6px; text-align: center;">
-              <div style="width: 100%; height: auto; margin-bottom: 4px;" id="opt-logo-female"></div>
-              <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">Female</span>
-            </div>
-            <div class="avatar-select-option" onclick="changeUserAvatar('robot')" style="cursor: pointer; border-radius: 14px; padding: 6px; text-align: center;">
-              <div style="width: 100%; height: auto; margin-bottom: 4px;" id="opt-logo-robot"></div>
-              <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">Robot</span>
-            </div>
-            <div class="avatar-select-option" onclick="changeUserAvatar('investor')" style="cursor: pointer; border-radius: 14px; padding: 6px; text-align: center;">
-              <div style="width: 100%; height: auto; margin-bottom: 4px;" id="opt-logo-investor"></div>
-              <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted);">Investor</span>
-            </div>
-          </div>
-        </div>
+        <!-- Hidden input for uploading direct custom profile image to Cloudinary -->
+        <input type="file" id="user-profile-file-input" accept="image/*" class="hidden" onchange="handleUserCustomAvatarUpload(event)">
       </div>
 
       <!-- Extended Statistics breakdown details -->
@@ -1679,7 +1750,7 @@
           <button class="admin-tab-btn active" onclick="switchAdminTab('admin-deposit-tab', this)">Deposits</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-withdraw-tab', this)">Withdrawals</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-plans-tab', this)">Plans</button>
-          <button class="admin-tab-btn" onclick="switchAdminTab('admin-details-tab', this)">Payment Gateways</button>
+          <button class="admin-tab-btn" onclick="switchAdminTab('admin-details-tab', this)">System Settings</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-locks-tab', this)">User Locks</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-promo-tab', this)">Promo Codes</button>
           <button class="admin-tab-btn" onclick="switchAdminTab('admin-tasks-tab', this)">Reward Tasks</button>
@@ -1687,7 +1758,7 @@
 
         <!-- TAB 1: DEPOSITS -->
         <div id="admin-deposit-tab" class="admin-content-view">
-          <h3 style="font-size: 1rem; margin-bottom: 12px;">Pending Deposits</h3>
+          <h3 style="font-size: 1rem; margin-bottom: 12px;">Pending Deposits & Proof Screenshots</h3>
           <div id="admin-deposits-list">
             <!-- Rendered dynamically -->
           </div>
@@ -1726,12 +1797,27 @@
           </div>
         </div>
 
-        <!-- TAB 4: DEPOSIT GATEWAYS DETAILS -->
+        <!-- TAB 4: DEPOSIT GATEWAYS & SYSTEM SETTINGS -->
         <div id="admin-details-tab" class="admin-content-view hidden">
-          <h3 style="font-size: 1rem; margin-bottom: 12px;">Payment Accounts Settings</h3>
+          <h3 style="font-size: 1rem; margin-bottom: 12px;">System & Payment Accounts Settings</h3>
           <form onsubmit="adminSaveGateways(event)" class="card" style="margin: 0; padding: 16px;">
             
-            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green);">EasyPaisa Details</p>
+            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-gold);">USD to PKR Exchange Rate</p>
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="number" step="0.01" id="admin-pkr-rate" class="form-input" placeholder="1 USD in PKR (e.g. 300)" style="padding-left: 20px" required>
+            </div>
+
+            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">WhatsApp Admin Details</p>
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="text" id="admin-whatsapp-num" class="form-input" placeholder="WhatsApp Number or Link (e.g. 923001234567)" style="padding-left: 20px">
+            </div>
+
+            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">WhatsApp Channel Link</p>
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="text" id="admin-whatsapp-channel" class="form-input" placeholder="WhatsApp Channel URL" style="padding-left: 20px">
+            </div>
+
+            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">EasyPaisa Details</p>
             <div class="input-group" style="margin-top: 6px;">
               <input type="text" id="admin-easypaisa-num" class="form-input" placeholder="EasyPaisa Account Number" style="padding-left: 20px">
             </div>
@@ -1904,10 +1990,15 @@
        APPLICATION JAVASCRIPT & DATABASE MANAGEMENT
        =================================================================== -->
   <script>
-    // System Constants & Firebase Realtime Database Config
-    const PKR_RATE = 280;
+    // System Variables
     let currentUser = null;
     let activeTeamFilter = 'all';
+    let selectedDepositScreenshotFile = null;
+
+    // Cloudinary Account Credentials
+    const CLOUDINARY_CLOUD_NAME = "mj6imk2l";
+    const CLOUDINARY_API_KEY = "441789895237481";
+    const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
 
     // Firebase Configurations
     const firebaseConfig = {
@@ -1927,6 +2018,11 @@
     let tasksDb = [];
     let configDb = {};
 
+    // Get current PKR Rate dynamically from configDb or default to 300
+    function getPkrRate() {
+      return parseFloat(configDb.pkr_rate) || 300;
+    }
+
     // Load initial nodes from remote Firebase RTDB 
     window.addEventListener('DOMContentLoaded', () => {
       database.ref('/').once('value').then(snapshot => {
@@ -1940,12 +2036,18 @@
         ];
         tasksDb = rootData.trading_tasks || [];
         configDb = rootData.trading_config || {
+          pkr_rate: 300,
+          whatsapp_admin: "",
+          whatsapp_channel: "",
           easypaisa_num: "03123456789",
           easypaisa_name: "John Doe",
           jazzcash_num: "03001234567",
           jazzcash_name: "Jane Smith",
-          usdt_addr: "0x1234567890abcdef1234567890abcdef12345678" // Sample USDT BEP20 Address
+          usdt_addr: "0x1234567890abcdef1234567890abcdef12345678"
         };
+
+        // Ensure default PKR rate is 300 if not set
+        if (!configDb.pkr_rate) configDb.pkr_rate = 300;
 
         // Deactivate loading panel
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -1964,16 +2066,6 @@
 
       toggleDrawer(false);
 
-      // Populate vector SVG structures for selection options
-      const maleLogoContainer = document.getElementById('opt-logo-male');
-      const femaleLogoContainer = document.getElementById('opt-logo-female');
-      const robotLogoContainer = document.getElementById('opt-logo-robot');
-      const investorLogoContainer = document.getElementById('opt-logo-investor');
-      if (maleLogoContainer) maleLogoContainer.innerHTML = getUserAvatarSvg('male');
-      if (femaleLogoContainer) femaleLogoContainer.innerHTML = getUserAvatarSvg('female');
-      if (robotLogoContainer) robotLogoContainer.innerHTML = getUserAvatarSvg('robot');
-      if (investorLogoContainer) investorLogoContainer.innerHTML = getUserAvatarSvg('investor');
-
       // Check URL parameters for active referrers
       const urlParams = new URLSearchParams(window.location.search);
       const refParam = urlParams.get('ref');
@@ -1986,92 +2078,98 @@
       }
     });
 
-    // Vector Graphics for Avatars (Clean vectors styled dynamically)
-    function getUserAvatarSvg(type) {
-      if (type === 'male') {
-        return `
-          <svg viewBox="0 0 100 100" style="width:100%; height:100%; border-radius:50%;">
-            <circle cx="50" cy="50" r="48" fill="#1e3a8a"/>
-            <rect x="44" y="55" width="12" height="15" fill="#fbcfe8" rx="2"/>
-            <circle cx="50" cy="42" r="20" fill="#fed7aa"/>
-            <path d="M30 38c0-12 8-20 20-20s20 8 20 20c0 2-4 0-4-4s-4-6-8-6-8 4-8 8c0 4-4 4-10 4s-10-2-10-2z" fill="#1e293b"/>
-            <circle cx="44" cy="42" r="2.5" fill="#1e293b"/>
-            <circle cx="56" cy="42" r="2.5" fill="#1e293b"/>
-            <path d="M45 50 q5 4 10 0" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path d="M22 80c0-12 12-18 28-18s28 6 28 18v10H22V80z" fill="#3b82f6"/>
-            <path d="M42 62l8 8 8-8" stroke="#ffffff" stroke-width="2.5" fill="none"/>
-          </svg>`;
-      } else if (type === 'female') {
-        return `
-          <svg viewBox="0 0 100 100" style="width:100%; height:100%; border-radius:50%;">
-            <circle cx="50" cy="50" r="48" fill="#4c0519"/>
-            <circle cx="50" cy="35" r="24" fill="#db2777"/>
-            <rect x="26" y="35" width="48" height="30" fill="#db2777" rx="10"/>
-            <rect x="45" y="58" width="10" height="12" fill="#fbcfe8"/>
-            <circle cx="50" cy="45" r="18" fill="#ffedd5"/>
-            <circle cx="38" cy="48" r="3" fill="#f43f5e" opacity="0.6"/>
-            <circle cx="62" cy="48" r="3" fill="#f43f5e" opacity="0.6"/>
-            <circle cx="44" cy="42" r="2.5" fill="#0f172a"/>
-            <circle cx="56" cy="42" r="2.5" fill="#0f172a"/>
-            <path d="M46 51 q4 3 8 0" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path d="M32 36c3-10 12-10 18-5c6-5 15-5 18 5c1 2-2 1-3-1c-2-3-7-4-10-1c-2 2-3 4-5 4s-3-2-5-4c-3-3-8-2-10 1c-1 2-4 3-3 1z" fill="#db2777"/>
-            <path d="M34 26l8 4l-4 4z" fill="#f43f5e"/>
-            <path d="M42 26l-8 4l4 4z" fill="#f43f5e"/>
-            <circle cx="38" cy="30" r="2" fill="#ffffff"/>
-            <path d="M25 82c0-10 10-15 25-15s25 5 25 15v8H25V82z" fill="#f43f5e"/>
-            <circle cx="50" cy="74" r="2" fill="#fff"/>
-          </svg>`;
-      } else if (type === 'robot') {
-        return `
-          <svg viewBox="0 0 100 100" style="width:100%; height:100%; border-radius:50%;">
-            <circle cx="50" cy="50" r="48" fill="#0f172a"/>
-            <rect x="46" y="60" width="8" height="10" fill="#64748b" rx="2"/>
-            <rect x="28" y="26" width="44" height="36" rx="10" fill="#94a3b8" stroke="#475569" stroke-width="2"/>
-            <rect x="22" y="38" width="6" height="12" rx="2" fill="#cbd5e1"/>
-            <rect x="72" y="38" width="6" height="12" rx="2" fill="#cbd5e1"/>
-            <rect x="34" y="34" width="32" height="16" rx="4" fill="#1e293b"/>
-            <circle cx="42" cy="42" r="4" fill="#06b6d4"/>
-            <circle cx="58" cy="42" r="4" fill="#06b6d4"/>
-            <path d="M40 54h20" stroke="#06b6d4" stroke-width="2.5" stroke-linecap="round"/>
-            <path d="M44 54l3-2l3 2l3-2l3 2" stroke="#06b6d4" stroke-width="1.5" fill="none"/>
-            <rect x="48" y="16" width="4" height="10" fill="#64748b"/>
-            <circle cx="50" cy="14" r="5" fill="#f43f5e"/>
-            <path d="M26 82c0-8 8-12 24-12s24 4 24 12v8H26V82z" fill="#475569" stroke="#334155" stroke-width="2"/>
-            <rect x="42" y="74" width="16" height="8" rx="2" fill="#1e293b"/>
-            <rect x="45" y="77" width="10" height="2" fill="#22c55e"/>
-          </svg>`;
-      } else {
-        // Business Investor
-        return `
-          <svg viewBox="0 0 100 100" style="width:100%; height:100%; border-radius:50%;">
-            <circle cx="50" cy="50" r="48" fill="#78350f"/>
-            <circle cx="50" cy="44" r="18" fill="#ffedd5"/>
-            <path d="M34 38h32l-2 8c-1 3-4 5-7 5h-4c-3 0-6-2-7-5z" fill="#1e293b"/>
-            <circle cx="43" cy="43" r="6" fill="#0f172a"/>
-            <circle cx="57" cy="43" r="6" fill="#0f172a"/>
-            <rect x="48" y="41" width="4" height="2" fill="#0f172a"/>
-            <path d="M46 54 q4 3 8 0" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-            <path d="M24 82c0-12 10-16 26-16s26 4 26 16v8H24V82z" fill="#0f172a"/>
-            <path d="M42 66l8 12l8-12z" fill="#ffffff"/>
-            <path d="M48 72l2 12l2-12l-2-2z" fill="#ef4444"/>
-          </svg>`;
-      }
-    }
+    // Cloudinary Image Upload Function
+    async function uploadImageToCloudinary(file, onProgress) {
+      return new Promise((resolve) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", "unsigned");
+        formData.append("api_key", CLOUDINARY_API_KEY);
 
-    // Toggle Avatar Selection Section
-    function toggleAvatarSelectionPanel() {
-      const selectionPanel = document.getElementById('avatar-selection-panel');
-      if (selectionPanel) {
-        selectionPanel.classList.toggle('hidden');
-      }
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", CLOUDINARY_UPLOAD_URL);
+
+        if (onProgress) {
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              onProgress(percent);
+            }
+          };
+        }
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (res.secure_url || res.url) {
+                resolve(res.secure_url || res.url);
+                return;
+              }
+            } catch (err) {}
+          }
+          // Fail-safe fallback
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        };
+
+        xhr.onerror = () => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(file);
+        };
+
+        xhr.send(formData);
+      });
     }
 
     // Helper conversion formatters
     function usdToPkr(usd) {
-      return (parseFloat(usd) * PKR_RATE).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+      return (parseFloat(usd) * getPkrRate()).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
 
-    // Synchronize Client State with Firebase RTDB
+    // External Resources Modal & Link Actions
+    function openWhatsAppAdmin() {
+      const wa = configDb.whatsapp_admin || "";
+      if (!wa) {
+        alert("WhatsApp Admin contact link has not been configured yet.");
+        return;
+      }
+      if (wa.startsWith('http://') || wa.startsWith('https://')) {
+        window.open(wa, '_blank');
+      } else {
+        const cleanNum = wa.replace(/[^0-9]/g, '');
+        window.open(`https://wa.me/${cleanNum}`, '_blank');
+      }
+    }
+
+    function openWhatsAppChannel() {
+      const channel = configDb.whatsapp_channel || "";
+      if (!channel) {
+        alert("WhatsApp Channel link has not been configured yet.");
+        return;
+      }
+      if (channel.startsWith('http://') || channel.startsWith('https://')) {
+        window.open(channel, '_blank');
+      } else {
+        window.open(`https://${channel}`, '_blank');
+      }
+    }
+
+    function openFbrModal() {
+      const modalInner = document.getElementById('workflow-modal-inner');
+      modalInner.innerHTML = `
+        <h3 style="color: var(--text-main); margin-bottom: 12px;"><i class="fa-solid fa-building" style="color: var(--dark-accent);"></i> FBR Registration Certificate</h3>
+        <div style="text-align: center; margin-bottom: 15px;">
+          <img src="https://iili.io/CrGdjVe.png" alt="FBR Certificate" style="width: 100%; max-height: 380px; object-fit: contain; border-radius: 12px; border: 1px solid var(--card-border);">
+        </div>
+        <button class="btn-primary" onclick="closeWorkflowModal()">Close</button>
+      `;
+      document.getElementById('workflow-modal').classList.remove('hidden');
+    }
+
+    // Synchronize Client State with Firebase RTDB 
     function saveState() {
       database.ref('trading_users').set(usersDb);
       database.ref('trading_plans').set(plansDb);
@@ -2218,7 +2316,7 @@
         total_withdrawals: 0.00,
         referral_comm: 0.00,
         active_plans: [],
-        avatar: 'investor', // default initial avatar
+        avatar: null,
         referred_by: refUser || null,
         notifications: [],
         claimed_tasks: [],
@@ -2260,7 +2358,6 @@
       if (!currentUser.notifications) currentUser.notifications = [];
       if (currentUser.referred_by === undefined) currentUser.referred_by = null;
       if (!currentUser.referral_comm) currentUser.referral_comm = 0.00;
-      if (!currentUser.avatar) currentUser.avatar = 'investor';
       if (!currentUser.uid) currentUser.uid = "MOCK-" + Math.floor(100000 + Math.random() * 900000);
       if (!currentUser.claimed_tasks) currentUser.claimed_tasks = [];
       if (!currentUser.withdrawalLock) currentUser.withdrawalLock = { enabled: false, requiredInvites: 0 };
@@ -2384,7 +2481,7 @@
               user: username,
               type: "earnings",
               amountUsd: dailyReward,
-              amountPkr: dailyReward * PKR_RATE,
+              amountPkr: dailyReward * getPkrRate(),
               gateway: "Auto Yield",
               reference: `Auto yield from "${plan.name}" (Day ${plan.daysClaimed}/${maxDuration})`,
               status: "paid",
@@ -2453,69 +2550,147 @@
     }
 
     function openPaymentSubmission(planIndex, gateway) {
+      selectedDepositScreenshotFile = null;
       const plan = plansDb[planIndex];
       const pkrPrice = usdToPkr(plan.price);
       let payDetailsHtml = ``;
 
       if (gateway === 'easypaisa') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid var(--card-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left">
-            <p><strong>Method:</strong> EasyPaisa Mobile Account</p>
-            <p><strong>Account Number:</strong> <b style="color: var(--dark-accent)">${configDb.easypaisa_num || "Not configured"}</b></p>
-            <p><strong>Account Holder:</strong> <b>${configDb.easypaisa_name || "Not configured"}</b></p>
-            <p style="color:var(--text-muted); font-size:0.7rem; margin-top:6px;">Transfer exact PKR value to the EasyPaisa mobile account above.</p>
+          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+            <p><strong>Method:</strong> EasyPaisa Account</p>
+            <p><strong>Account Number:</strong> <b style="color: #10b981">${configDb.easypaisa_num || "03123456789"}</b></p>
+            <p><strong>Account Holder:</strong> <b>${configDb.easypaisa_name || "John Doe"}</b></p>
           </div>
         `;
       } else if (gateway === 'jazzcash') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid var(--card-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left">
-            <p><strong>Method:</strong> JazzCash Mobile Account</p>
-            <p><strong>Account Number:</strong> <b style="color: var(--dark-accent)">${configDb.jazzcash_num || "Not configured"}</b></p>
-            <p><strong>Account Holder:</strong> <b>${configDb.jazzcash_name || "Not configured"}</b></p>
-            <p style="color:var(--text-muted); font-size:0.7rem; margin-top:6px;">Transfer exact PKR value to the JazzCash mobile account above.</p>
+          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+            <p><strong>Method:</strong> JazzCash Account</p>
+            <p><strong>Account Number:</strong> <b style="color: #10b981">${configDb.jazzcash_num || "03001234567"}</b></p>
+            <p><strong>Account Holder:</strong> <b>${configDb.jazzcash_name || "Jane Smith"}</b></p>
           </div>
         `;
       } else if (gateway === 'usdt') {
         payDetailsHtml = `
-          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid var(--card-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left">
-            <p><strong>Method:</strong> USDT Web 20 (BEP 20)</p>
-            <p style="word-break: break-all;"><strong>BNB Smart Chain Address:</strong> <br><b style="color: var(--dark-accent)">${configDb.usdt_addr || "Not configured"}</b></p>
-            <p style="color:var(--text-muted); font-size:0.7rem; margin-top:6px;">Send only USDT stablecoins via BSC BEP-20 (Web 20) network protocol.</p>
+          <div style="background:rgba(0,0,0,0.25); padding:12px; border: 1px solid rgba(16, 185, 129, 0.3); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color:#fff;">
+            <p><strong>Method:</strong> USDT BEP20 Smart Chain</p>
+            <p style="word-break: break-all;"><strong>Address:</strong> <b style="color: #10b981">${configDb.usdt_addr || "0x123..."}</b></p>
           </div>
         `;
       }
 
       const modalInner = document.getElementById('workflow-modal-inner');
       modalInner.innerHTML = `
-        <h3 style="color: var(--text-main); margin-bottom: 4px;">Submit Payment Proof</h3>
-        <p style="font-size:0.75rem; color: var(--text-muted);">Amount Required: <b>$${parseFloat(plan.price).toFixed(2)} ≈ ${pkrPrice} PKR</b></p>
-        
-        ${payDetailsHtml}
-
-        <form onsubmit="submitDepositRequest(event, ${planIndex}, '${gateway}')" style="text-align:left">
-          <label style="font-size:0.75rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:4px">Transaction Reference ID / TXID / Sender Account Number</label>
-          <div class="input-group" style="margin-bottom:12px">
-            <input type="text" id="deposit-txid" class="form-input" style="padding-left:20px" placeholder="Enter transfer reference / TXID" required>
+        <div class="deposit-screen-container">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <h3 style="font-size:1.15rem; font-weight:800; color:#ffffff;">Submit Payment</h3>
+            <span style="font-size:0.8rem; color:#10b981; font-weight:700;">$${parseFloat(plan.price).toFixed(2)} ≈ ${pkrPrice} PKR</span>
           </div>
-          <button type="submit" class="btn-primary" style="margin-top:5px">Submit Deposit Request</button>
-        </form>
-        <button class="btn-primary" style="background:#64748b; margin-top:6px" onclick="closeWorkflowModal()">Cancel</button>
+
+          ${payDetailsHtml}
+
+          <form onsubmit="submitDepositRequest(event, ${planIndex}, '${gateway}')">
+            <!-- Label 1: Transaction ID -->
+            <label style="font-size:0.95rem; font-weight:700; color:#ffffff; display:block; margin-bottom:8px;">Transaction ID</label>
+            <div style="margin-bottom:18px;">
+              <input type="text" id="deposit-txid" class="deposit-input-box" placeholder="Enter transaction ID" required>
+            </div>
+
+            <!-- Dashboard Box 2: Screenshot Upload Container -->
+            <div class="upload-box-container" onclick="document.getElementById('deposit-screenshot-input').click()">
+              <div class="upload-circle-btn">
+                <i class="fa-regular fa-file-image"></i>
+                <div class="plus-icon-badge">+</div>
+              </div>
+
+              <div class="upload-text-main" id="upload-box-main-text">Tap to upload screenshot</div>
+              <div class="upload-text-sub" id="upload-box-sub-text">PNG, JPG or JPEG</div>
+
+              <!-- Selected Image Preview Container -->
+              <div id="screenshot-preview-wrapper" class="hidden" style="margin-top: 12px;">
+                <img id="screenshot-preview-img" style="max-width: 100%; max-height: 140px; border-radius: 12px; border: 1px solid #10b981;">
+              </div>
+
+              <!-- Real-time Progress Bar -->
+              <div class="upload-progress-track">
+                <div class="upload-progress-fill" id="deposit-upload-bar-fill"></div>
+              </div>
+              <div style="text-align: right; font-size: 0.8rem; font-weight: 700; color: #10b981; margin-top: 4px;" id="deposit-upload-percent-text">0%</div>
+
+              <input type="file" id="deposit-screenshot-input" accept="image/png, image/jpeg, image/jpg" class="hidden" required onchange="handleScreenshotFileChange(event)">
+            </div>
+
+            <button type="submit" id="btn-submit-payment-dep" class="btn-green-submit">Submit Payment</button>
+          </form>
+          
+          <button class="btn-primary" style="background:#01321d; color:#ffffff; border: 1px solid #058552; margin-top:12px;" onclick="closeWorkflowModal()">Cancel</button>
+        </div>
       `;
     }
 
-    function submitDepositRequest(e, planIndex, gateway) {
+    // Handles screenshot selection and preview
+    function handleScreenshotFileChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      selectedDepositScreenshotFile = file;
+
+      document.getElementById('upload-box-main-text').innerText = file.name;
+      document.getElementById('upload-box-sub-text').innerText = `${(file.size / 1024).toFixed(1)} KB (Ready to upload)`;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const previewImg = document.getElementById('screenshot-preview-img');
+        const previewWrap = document.getElementById('screenshot-preview-wrapper');
+        if (previewImg && previewWrap) {
+          previewImg.src = evt.target.result;
+          previewWrap.classList.remove('hidden');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Handles deposit submission with Cloudinary Upload
+    async function submitDepositRequest(e, planIndex, gateway) {
       e.preventDefault();
       const plan = plansDb[planIndex];
       const txid = document.getElementById('deposit-txid').value.trim();
 
+      if (!txid) {
+        alert("Please enter a valid Transaction ID.");
+        return;
+      }
+
+      if (!selectedDepositScreenshotFile) {
+        alert("Payment screenshot is mandatory. Please tap the box to upload your payment screenshot.");
+        return;
+      }
+
+      const submitBtn = document.getElementById('btn-submit-payment-dep');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Uploading Proof...";
+      }
+
+      // Upload to Cloudinary with real-time percentage progress updates
+      const uploadedScreenshotUrl = await uploadImageToCloudinary(selectedDepositScreenshotFile, (percent) => {
+        const fillBar = document.getElementById('deposit-upload-bar-fill');
+        const percentText = document.getElementById('deposit-upload-percent-text');
+        if (fillBar) fillBar.style.width = `${percent}%`;
+        if (percentText) percentText.innerText = `${percent}%`;
+      });
+
+      const currentRate = getPkrRate();
       const newTx = {
         txId: "TX" + Date.now(),
         user: currentUser.username,
         type: "deposit",
         amountUsd: parseFloat(plan.price),
-        amountPkr: parseFloat(plan.price) * PKR_RATE,
+        amountPkr: parseFloat(plan.price) * currentRate,
         gateway: gateway,
         reference: txid,
+        screenshotUrl: uploadedScreenshotUrl,
         planName: plan.name,
         planDaily: plan.daily,
         planDuration: plan.duration,
@@ -2524,16 +2699,16 @@
       };
 
       transactionsDb.push(newTx);
-      addNotification(currentUser.username, `Your deposit request for $${parseFloat(plan.price).toFixed(2)} (${(parseFloat(plan.price) * PKR_RATE).toFixed(2)} PKR) is submitted and is currently pending review.`);
+      addNotification(currentUser.username, `Your deposit request for $${parseFloat(plan.price).toFixed(2)} (${(parseFloat(plan.price) * currentRate).toFixed(2)} PKR) with Transaction ID "${txid}" has been submitted.`);
 
       saveState();
       closeWorkflowModal();
-      openModal('Request Submitted', `Your deposit order of $${parseFloat(plan.price).toFixed(2)} (${(parseFloat(plan.price)*PKR_RATE).toFixed(2)} PKR) is pending verification by administration.`);
+      openModal('Payment Submitted', `Your deposit order of $${parseFloat(plan.price).toFixed(2)} (${(parseFloat(plan.price)*currentRate).toFixed(2)} PKR) and screenshot proof were submitted successfully for verification.`);
     }
 
 
     /* ===================================================================
-       WITHDRAWAL SYSTEM WORKFLOW (WITH SECURITY LOCK CHECK)
+       WITHDRAWAL SYSTEM WORKFLOW
        =================================================================== */
     function triggerWithdrawalFlow() {
       // Security Lock verification
@@ -2547,7 +2722,7 @@
         }
       }
 
-      const pkrLimit = (5 * PKR_RATE).toFixed(2);
+      const pkrLimit = (5 * getPkrRate()).toFixed(2);
       const modalInner = document.getElementById('workflow-modal-inner');
       modalInner.innerHTML = `
         <h3 style="color: var(--text-main); margin-bottom: 4px;">Account Withdrawal</h3>
@@ -2611,7 +2786,7 @@
 
     function updateWithdrawalPkrPreview(val) {
       const usdVal = parseFloat(val) || 0;
-      const pkrVal = usdVal * PKR_RATE;
+      const pkrVal = usdVal * getPkrRate();
       document.getElementById('withdraw-preview-pkr').innerText = `You will receive: ${pkrVal.toLocaleString(undefined, {minimumFractionDigits: 2})} PKR`;
     }
 
@@ -2666,6 +2841,7 @@
         detailsText = `Holder: ${name} (${num})`;
       }
 
+      const currentRate = getPkrRate();
       usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) - usdAmount;
       
       const newTx = {
@@ -2673,7 +2849,7 @@
         user: currentUser.username,
         type: "withdrawal",
         amountUsd: usdAmount,
-        amountPkr: usdAmount * PKR_RATE,
+        amountPkr: usdAmount * currentRate,
         gateway: method,
         reference: detailsText,
         status: "pending",
@@ -2681,11 +2857,11 @@
       };
 
       transactionsDb.push(newTx);
-      addNotification(currentUser.username, `Withdrawal request of $${usdAmount.toFixed(2)} (${(usdAmount * PKR_RATE).toFixed(2)} PKR) was submitted.`);
+      addNotification(currentUser.username, `Withdrawal request of $${usdAmount.toFixed(2)} (${(usdAmount * currentRate).toFixed(2)} PKR) was submitted.`);
 
       saveState();
       closeWorkflowModal();
-      openModal("Request Placed", `Your withdrawal request for $${usdAmount.toFixed(2)} (${(usdAmount * PKR_RATE).toFixed(2)} PKR) was placed.`);
+      openModal("Request Placed", `Your withdrawal request for $${usdAmount.toFixed(2)} (${(usdAmount * currentRate).toFixed(2)} PKR) was placed.`);
     }
 
 
@@ -2715,6 +2891,7 @@
         return;
       }
 
+      const currentRate = getPkrRate();
       const rewardAmount = parseFloat(promo.reward);
       promo.claimedBy.push(currentUser.username);
       usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) + rewardAmount;
@@ -2724,7 +2901,7 @@
         user: currentUser.username,
         type: "promo_reward",
         amountUsd: rewardAmount,
-        amountPkr: rewardAmount * PKR_RATE,
+        amountPkr: rewardAmount * currentRate,
         gateway: "Promo Redeem",
         reference: `Code: ${rawCode}`,
         status: "paid",
@@ -2734,7 +2911,7 @@
       addNotification(currentUser.username, `Success! Promo Code "${rawCode}" redeemed. Direct cash credit of $${rewardAmount.toFixed(2)} applied.`);
 
       saveState();
-      openModal("Code Redeemed!", `Success! You received $${rewardAmount.toFixed(2)} (${(rewardAmount * PKR_RATE).toFixed(2)} PKR) direct cash balance credit.`);
+      openModal("Code Redeemed!", `Success! You received $${rewardAmount.toFixed(2)} (${(rewardAmount * currentRate).toFixed(2)} PKR) direct cash balance credit.`);
       document.getElementById('promo-input-field').value = "";
     }
 
@@ -3102,6 +3279,7 @@
         return;
       }
 
+      const currentRate = getPkrRate();
       plansDb.forEach((plan, i) => {
         const returnTotal = parseFloat(plan.daily) * parseInt(plan.duration);
         container.innerHTML += `
@@ -3112,7 +3290,7 @@
               <div>
                 <div class="pkg-title">${plan.name}</div>
                 <div class="pkg-price">$${parseFloat(plan.price).toFixed(2)}</div>
-                <div style="font-size:0.7rem; color: var(--text-muted);">≈ ${(parseFloat(plan.price)*PKR_RATE).toLocaleString()} PKR</div>
+                <div style="font-size:0.7rem; color: var(--text-muted);">≈ ${(parseFloat(plan.price)*currentRate).toLocaleString()} PKR</div>
               </div>
             </div>
             <div class="pkg-detail-line">
@@ -3284,6 +3462,7 @@
       currentUser.claimed_tasks.push(taskId);
       usersDb[currentUser.username].claimed_tasks = currentUser.claimed_tasks;
 
+      const currentRate = getPkrRate();
       const rewardVal = parseFloat(task.reward);
       usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance) + rewardVal;
 
@@ -3292,7 +3471,7 @@
         user: currentUser.username,
         type: "promo_reward",
         amountUsd: rewardVal,
-        amountPkr: rewardVal * PKR_RATE,
+        amountPkr: rewardVal * currentRate,
         gateway: "Task Center",
         reference: `Claimed: ${task.title}`,
         status: "paid",
@@ -3369,27 +3548,46 @@
 
 
     /* ===================================================================
-       PROFILE SCREEN AVATARS LOGOS UPDATES
+       PROFILE SCREEN PHOTO UPDATES
        =================================================================== */
-    function changeUserAvatar(logoType) {
+    function triggerProfileImageUpload() {
+      const input = document.getElementById('user-profile-file-input');
+      if (input) input.click();
+    }
+
+    async function handleUserCustomAvatarUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const loadingMsg = document.createElement('div');
+      loadingMsg.innerText = "Uploading picture to Cloudinary...";
+      loadingMsg.style.cssText = "position:fixed; top:20px; left:50%; transform:translateX(-50%); background:#10b981; color:#fff; padding:10px 20px; border-radius:20px; z-index:9999; font-weight:700; font-size:0.85rem;";
+      document.body.appendChild(loadingMsg);
+
+      const photoUrl = await uploadImageToCloudinary(file);
+      document.body.removeChild(loadingMsg);
+
       if (!currentUser) return;
-      usersDb[currentUser.username].avatar = logoType;
-      currentUser.avatar = logoType;
+      usersDb[currentUser.username].avatar = photoUrl;
+      currentUser.avatar = photoUrl;
       saveState();
 
       updateProfileLayout();
-      updateDashboardData();
-      alert("Avatar changed successfully.");
+      alert("Profile picture updated successfully.");
     }
 
     function updateProfileLayout() {
       if (!currentUser) return;
       const userObj = usersDb[currentUser.username];
-      const selectedLogo = userObj.avatar || 'investor';
+      const selectedLogo = userObj.avatar;
 
       const activeFrame = document.getElementById('profile-active-avatar-wrap');
       if (activeFrame) {
-        activeFrame.innerHTML = getUserAvatarSvg(selectedLogo);
+        if (selectedLogo && (selectedLogo.startsWith('http') || selectedLogo.startsWith('data:image'))) {
+          activeFrame.innerHTML = `<img src="${selectedLogo}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+        } else {
+          activeFrame.innerHTML = `<i class="fa-solid fa-user" style="font-size: 2.2rem; color: var(--dark-accent);"></i>`;
+        }
       }
 
       document.getElementById('profile-id-display').innerText = `ID: ${userObj.uid}`;
@@ -3409,17 +3607,6 @@
       document.getElementById('profile-meta-deposits').innerText = `$${parseFloat(userObj.total_deposits || 0).toFixed(2)}`;
       document.getElementById('profile-meta-withdrawals').innerText = `$${parseFloat(userObj.total_withdrawals || 0).toFixed(2)}`;
       document.getElementById('profile-meta-ref').innerText = userObj.referred_by ? `@${userObj.referred_by}` : 'Direct registration';
-
-      document.querySelectorAll('.avatar-select-option').forEach(element => {
-        element.style.borderColor = 'transparent';
-        element.style.background = 'rgba(255, 255, 255, 0.03)';
-      });
-
-      const matchedOption = document.querySelector(`.avatar-select-option[onclick="changeUserAvatar('${selectedLogo}')"]`);
-      if (matchedOption) {
-        matchedOption.style.borderColor = 'var(--dark-accent)';
-        matchedOption.style.background = 'rgba(56, 189, 248, 0.08)';
-      }
     }
 
 
@@ -3446,18 +3633,31 @@
       }
 
       pendings.forEach(t => {
+        const screenshotHtml = t.screenshotUrl ? `
+          <div style="margin-top: 10px;">
+            <p style="font-size:0.7rem; color: var(--accent-green); font-weight:700; margin-bottom: 4px;">Payment Screenshot Proof:</p>
+            <a href="${t.screenshotUrl}" target="_blank">
+              <img src="${t.screenshotUrl}" alt="Proof" style="width: 100%; max-width: 240px; height: auto; max-height: 180px; object-fit: contain; border-radius: 12px; border: 1px solid var(--card-border); background: #000; display: block;">
+            </a>
+          </div>
+        ` : `<p style="font-size:0.7rem; color:#ef4444; margin-top:4px;">No screenshot proof attached</p>`;
+
         container.innerHTML += `
-          <div class="admin-item-row">
-            <div>
-              <p style="font-size:0.8rem">User: <b>${t.user}</b></p>
-              <p style="font-size:0.7rem">Plan: ${t.planName} | Gateway: ${t.gateway}</p>
-              <p style="font-size:0.7rem; word-break:break-all;">Ref: ${t.reference}</p>
-              <p style="font-size:0.85rem; font-weight:700; color:var(--accent-green); margin-top:4px;">$${t.amountUsd.toFixed(2)} (${t.amountPkr.toLocaleString()} PKR)</p>
+          <div class="admin-item-row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <p style="font-size:0.85rem">User: <b style="color:var(--dark-accent)">${t.user}</b></p>
+                <p style="font-size:0.75rem">Plan: <b>${t.planName}</b> | Gateway: <b>${t.gateway}</b></p>
+                <p style="font-size:0.75rem; word-break:break-all; color: var(--text-sub);">Transaction ID: <b>${t.reference}</b></p>
+                <p style="font-size:0.9rem; font-weight:800; color:var(--accent-green); margin-top:4px;">$${t.amountUsd.toFixed(2)} (${t.amountPkr.toLocaleString()} PKR)</p>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button class="admin-action-btn admin-btn-approve" onclick="adminProcessDeposit('${t.txId}', 'approve')">Approve</button>
+                <button class="admin-action-btn admin-btn-reject" onclick="adminProcessDeposit('${t.txId}', 'reject')">Reject</button>
+              </div>
             </div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <button class="admin-action-btn admin-btn-approve" onclick="adminProcessDeposit('${t.txId}', 'approve')">Approve</button>
-              <button class="admin-action-btn admin-btn-reject" onclick="adminProcessDeposit('${t.txId}', 'reject')">Reject</button>
-            </div>
+
+            ${screenshotHtml}
           </div>
         `;
       });
@@ -3469,6 +3669,7 @@
 
       const tx = transactionsDb[txIndex];
       const targetUser = tx.user;
+      const currentRate = getPkrRate();
 
       if (action === 'approve') {
         transactionsDb[txIndex].status = "paid";
@@ -3501,7 +3702,7 @@
             user: parentL1,
             type: "referral_comm",
             amountUsd: l1Reward,
-            amountPkr: l1Reward * PKR_RATE,
+            amountPkr: l1Reward * currentRate,
             gateway: "Commission",
             reference: `L1 from ${targetUser}`,
             status: "paid",
@@ -3521,7 +3722,7 @@
               user: parentL2,
               type: "referral_comm",
               amountUsd: l2Reward,
-              amountPkr: l2Reward * PKR_RATE,
+              amountPkr: l2Reward * currentRate,
               gateway: "Commission",
               reference: `L2 from ${targetUser}`,
               status: "paid",
@@ -3541,7 +3742,7 @@
                 user: parentL3,
                 type: "referral_comm",
                 amountUsd: l3Reward,
-                amountPkr: l3Reward * PKR_RATE,
+                amountPkr: l3Reward * currentRate,
                 gateway: "Commission",
                 reference: `L3 from ${targetUser}`,
                 status: "paid",
@@ -3662,6 +3863,9 @@
 
     function adminSaveGateways(e) {
       e.preventDefault();
+      configDb.pkr_rate = parseFloat(document.getElementById('admin-pkr-rate').value) || 300;
+      configDb.whatsapp_admin = document.getElementById('admin-whatsapp-num').value.trim();
+      configDb.whatsapp_channel = document.getElementById('admin-whatsapp-channel').value.trim();
       configDb.easypaisa_num = document.getElementById('admin-easypaisa-num').value.trim();
       configDb.easypaisa_name = document.getElementById('admin-easypaisa-name').value.trim();
       configDb.jazzcash_num = document.getElementById('admin-jazzcash-num').value.trim();
@@ -3669,10 +3873,13 @@
       configDb.usdt_addr = document.getElementById('admin-usdt-addr').value.trim();
 
       saveState();
-      alert("Payment Configurations saved.");
+      alert("System & Payment Configurations saved successfully.");
     }
 
     function loadAdminGatewayInputs() {
+      document.getElementById('admin-pkr-rate').value = configDb.pkr_rate || 300;
+      document.getElementById('admin-whatsapp-num').value = configDb.whatsapp_admin || "";
+      document.getElementById('admin-whatsapp-channel').value = configDb.whatsapp_channel || "";
       document.getElementById('admin-easypaisa-num').value = configDb.easypaisa_num || "";
       document.getElementById('admin-easypaisa-name').value = configDb.easypaisa_name || "";
       document.getElementById('admin-jazzcash-num').value = configDb.jazzcash_num || "";
@@ -3736,7 +3943,6 @@
         requiredInvites: requiredCount
       };
 
-      // Push custom notification onto the user's feed upon lock setting save
       if (enabled) {
         addNotification(username, `Security Notice: A withdrawal security restriction has been enabled on your account. You must invite at least ${requiredCount} direct users before withdrawals can be processed.`);
       } else {
