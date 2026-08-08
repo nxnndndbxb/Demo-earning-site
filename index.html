@@ -2810,7 +2810,7 @@
       if (lock.enabled) {
         const directInvites = getTeamData(currentUser.username).l1.length;
         if (directInvites < lock.requiredInvites) {
-          alert(`Withdrawal Blocked!\n\nYour account has a security lock active. You need to make at least ${lock.requiredInvites} direct invites to unlock withdrawals.\n\nCurrently you have: ${directInvites} invites.`);
+          alert(`Withdrawal Blocked!\n\nYour account has a security lock active. You need to make at least ${lock.requiredInvites} direct Member or deposit according your investment to unlock widrawal.\n\nCurrently you have: ${directInvites} invites.`);
           return;
         }
       }
