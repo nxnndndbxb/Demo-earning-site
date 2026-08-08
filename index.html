@@ -1102,7 +1102,7 @@
           <path d="M75 35H25C20 35 16 39 16 44V72C16 77 20 81 25 81H75C80 81 84 77 84 72V44C84 39 80 35 75 35Z" fill="#020c1a" stroke="var(--dark-accent)" stroke-width="3"/>
           <circle cx="68" cy="58" r="7" fill="#fbbf24"/>
         </svg>
-        <h1 style="font-size: 1.8rem; color: var(--text-main);">Mockup Trading</h1>
+        <h1 style="font-size: 1.8rem; color: var(--text-main);">Asset Flow</h1>
         <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;" id="auth-subtitle">Create Account</p>
       </div>
 
@@ -2355,7 +2355,7 @@
       };
 
       usersDb[user] = newUserObj;
-      addNotification(user, `Welcome to Mockup Trading, ${user}! Explore our investment packages to start earning daily returns.`);
+      addNotification(user, `Welcome to Asset Flow, ${user}! Explore our investment packages to start earning daily returns.`);
 
       await database.ref('trading_users/' + user).set(newUserObj);
       saveState();
