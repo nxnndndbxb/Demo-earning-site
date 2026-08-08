@@ -1712,6 +1712,31 @@
               <input type="number" step="0.01" id="admin-pkr-rate" class="form-input" placeholder="1 USD in PKR (e.g. 300)" style="padding-left: 20px" required>
             </div>
 
+            <!-- WITHDRAWAL CONTROL SETTINGS -->
+            <p style="font-size: 0.8rem; font-weight: 700; color: #ef4444; margin-top: 14px;">Withdrawal Controls & Limits</p>
+            
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="number" step="0.01" id="admin-withdraw-min" class="form-input" placeholder="Minimum Withdrawal ($)" style="padding-left: 20px" required>
+            </div>
+
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="number" step="0.01" id="admin-withdraw-max" class="form-input" placeholder="Maximum Withdrawal ($)" style="padding-left: 20px" required>
+            </div>
+
+            <div class="input-group" style="margin-top: 6px;">
+              <input type="number" step="0.01" id="admin-withdraw-fee" class="form-input" placeholder="Withdrawal Fee (%)" style="padding-left: 20px" required>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 14px; background: rgba(239,68,68,0.1); padding: 10px; border-radius: 12px; border: 1px solid rgba(239,68,68,0.2);">
+              <input type="checkbox" id="admin-withdrawals-off-toggle" style="transform: scale(1.3); cursor: pointer; accent-color: #ef4444;">
+              <label for="admin-withdrawals-off-toggle" style="font-size: 0.8rem; font-weight: 700; color: #fca5a5; cursor: pointer;">
+                Turn Off All Withdrawals (Manual Admin Switch)
+              </label>
+            </div>
+            <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: -6px; margin-bottom: 14px;">
+              Note: Withdrawals are automatically disabled for everyone on Sundays.
+            </p>
+
             <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">WhatsApp Admin Details</p>
             <div class="input-group" style="margin-top: 6px;">
               <input type="text" id="admin-whatsapp-num" class="form-input" placeholder="WhatsApp Number or Link (e.g. 923001234567)" style="padding-left: 20px">
@@ -1738,9 +1763,9 @@
               <input type="text" id="admin-jazzcash-name" class="form-input" placeholder="JazzCash Account Name" style="padding-left: 20px">
             </div>
 
-            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">USDT Web 20 (BEP 20) Address</p>
+            <p style="font-size: 0.8rem; font-weight: 700; color: var(--accent-green); margin-top: 14px;">USDT BEP20 Address</p>
             <div class="input-group" style="margin-top: 6px;">
-              <input type="text" id="admin-usdt-addr" class="form-input" placeholder="USDT Web 20 (BEP 20) Wallet Address" style="padding-left: 20px">
+              <input type="text" id="admin-usdt-addr" class="form-input" placeholder="USDT BEP20 Wallet Address" style="padding-left: 20px">
             </div>
 
             <button type="submit" class="btn-primary" style="margin-top: 10px;">Save Accounts Configuration</button>
@@ -2023,10 +2048,18 @@
           easypaisa_name: "John Doe",
           jazzcash_num: "03001234567",
           jazzcash_name: "Jane Smith",
-          usdt_addr: "0x1234567890abcdef1234567890abcdef12345678"
+          usdt_addr: "0x1234567890abcdef1234567890abcdef12345678",
+          withdraw_min: 5,
+          withdraw_max: 10000,
+          withdraw_fee: 0,
+          withdrawals_off: false
         };
 
-        if (!configDb.pkr_rate) configDb.pkr_rate = 300;
+        if (configDb.pkr_rate === undefined) configDb.pkr_rate = 300;
+        if (configDb.withdraw_min === undefined) configDb.withdraw_min = 5;
+        if (configDb.withdraw_max === undefined) configDb.withdraw_max = 10000;
+        if (configDb.withdraw_fee === undefined) configDb.withdraw_fee = 0;
+        if (configDb.withdrawals_off === undefined) configDb.withdrawals_off = false;
 
         if (isFirstLoad) {
           isFirstLoad = false;
@@ -2586,8 +2619,8 @@
           <div class="pay-opt-card" onclick="openPaymentSubmission(${planIndex}, 'usdt')">
             <div class="pay-opt-icon" style="color: #2563eb;"><i class="fa-solid fa-coins"></i></div>
             <div>
-              <h4 style="font-size:0.85rem">USDT Web 20 (BEP 20)</h4>
-              <p style="font-size:0.7rem; color:var(--text-muted)">BNB Smart Chain Network</p>
+              <h4 style="font-size:0.85rem">USDT BEP20</h4>
+              <p style="font-size:0.7rem; color:var(--text-muted)">BEP20 Network</p>
             </div>
           </div>
         </div>
@@ -2623,7 +2656,7 @@
       } else if (gateway === 'usdt') {
         payDetailsHtml = `
           <div style="background: var(--input-bg); padding:12px; border: 1px solid var(--input-border); border-radius:12px; font-size:0.8rem; margin:10px 0; text-align:left; color: var(--text-main);">
-            <p><strong>Method:</strong> USDT BEP20 Smart Chain</p>
+            <p><strong>Method:</strong> USDT BEP20</p>
             <p style="word-break: break-all;"><strong>Address:</strong> <b style="color: var(--dark-accent)">${configDb.usdt_addr || "0x123..."}</b></p>
           </div>
         `;
@@ -2759,6 +2792,19 @@
 
     /* WITHDRAWAL SYSTEM WORKFLOW */
     function triggerWithdrawalFlow() {
+      // Check if today is Sunday (0 = Sunday)
+      const isSunday = (new Date().getDay() === 0);
+      if (isSunday) {
+        alert("Withdrawals are disabled on Sundays. Please try again on a weekday.");
+        return;
+      }
+
+      // Check Admin manual toggle switch
+      if (configDb.withdrawals_off) {
+        alert("Withdrawals are currently disabled by administration.");
+        return;
+      }
+
       const userObj = usersDb[currentUser.username];
       const lock = userObj.withdrawalLock || { enabled: false, requiredInvites: 0 };
       if (lock.enabled) {
@@ -2769,7 +2815,12 @@
         }
       }
 
-      const pkrLimit = (5 * getPkrRate()).toFixed(2);
+      const minVal = parseFloat(configDb.withdraw_min) || 5;
+      const maxVal = parseFloat(configDb.withdraw_max) || 10000;
+      const feeVal = parseFloat(configDb.withdraw_fee) || 0;
+      const pkrMinLimit = (minVal * getPkrRate()).toFixed(2);
+      const pkrMaxLimit = (maxVal * getPkrRate()).toFixed(2);
+
       const modalInner = document.getElementById('workflow-modal-inner');
       modalInner.innerHTML = `
         <h3 style="color: var(--text-main); margin-bottom: 4px;">Account Withdrawal</h3>
@@ -2781,7 +2832,7 @@
             <select id="withdraw-gateway" class="form-input" style="padding-left:20px; background: var(--input-bg);" onchange="toggleWithdrawFields(this.value)">
               <option value="easypaisa">EasyPaisa (PKR)</option>
               <option value="jazzcash">JazzCash (PKR)</option>
-              <option value="usdt_bep20">USDT Web 20 (BEP 20) BNB Smart Chain</option>
+              <option value="usdt_bep20">USDT BEP20</option>
             </select>
           </div>
 
@@ -2797,11 +2848,11 @@
           </div>
 
           <div id="with-crypto-fields" class="hidden">
-            <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);">USDT Web 20 (BEP 20) Address</label>
+            <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);">USDT BEP20 Address</label>
             <div class="input-group" style="margin-top:4px; margin-bottom:12px">
               <input type="text" id="withdraw-crypto-addr" class="form-input" style="padding-left:20px" placeholder="0x...">
             </div>
-            <p style="font-size:0.65rem; color:var(--text-muted); margin-top:-6px; margin-bottom:10px;"><i class="fa-solid fa-triangle-exclamation"></i> Standard BEP20 BNB Smart Chain network address only.</p>
+            <p style="font-size:0.65rem; color:var(--text-muted); margin-top:-6px; margin-bottom:10px;"><i class="fa-solid fa-triangle-exclamation"></i> Standard BEP20 network address only.</p>
           </div>
 
           <label style="font-size:0.75rem; font-weight:700; color:var(--text-main);">Amount in USD ($)</label>
@@ -2811,7 +2862,8 @@
           <p id="withdraw-preview-pkr" style="font-size:0.75rem; font-weight:700; color:var(--accent-green); margin-bottom:12px;">You will receive: 0.00 PKR</p>
           
           <div style="font-size:0.7rem; color:var(--text-muted); background: rgba(0,0,0,0.2); border-radius:8px; padding:10px; border:1px solid var(--input-border); margin-bottom:14px">
-             <strong>Minimum Withdrawal:</strong> $5.00 USD (${pkrLimit} PKR)
+             <strong>Withdrawal Range:</strong> $${minVal.toFixed(2)} - $${maxVal.toFixed(2)} USD<br>
+             <strong>Fee:</strong> ${feeVal}% Fee Applied
           </div>
 
           <button class="btn-primary" onclick="submitWithdrawalRequest()">Request Withdrawal</button>
@@ -2833,8 +2885,11 @@
 
     function updateWithdrawalPkrPreview(val) {
       const usdVal = parseFloat(val) || 0;
-      const pkrVal = usdVal * getPkrRate();
-      document.getElementById('withdraw-preview-pkr').innerText = `You will receive: ${pkrVal.toLocaleString(undefined, {minimumFractionDigits: 2})} PKR`;
+      const feePct = parseFloat(configDb.withdraw_fee) || 0;
+      const feeAmtUsd = usdVal * (feePct / 100);
+      const netUsd = Math.max(0, usdVal - feeAmtUsd);
+      const pkrVal = netUsd * getPkrRate();
+      document.getElementById('withdraw-preview-pkr').innerText = `Fee: ${feePct}% ($${feeAmtUsd.toFixed(2)}) | Net Receive: ${pkrVal.toLocaleString(undefined, {minimumFractionDigits: 2})} PKR`;
     }
 
     function submitForgotPasswordReset() {
@@ -2858,12 +2913,31 @@
     }
 
     function submitWithdrawalRequest() {
+      // Check Sunday Off
+      if (new Date().getDay() === 0) {
+        alert("Withdrawals are disabled on Sundays. Please try again on a weekday.");
+        return;
+      }
+
+      // Check Admin Switch Off
+      if (configDb.withdrawals_off) {
+        alert("Withdrawals are currently disabled by administration.");
+        return;
+      }
+
       const method = document.getElementById('withdraw-gateway').value;
       const usdAmount = parseFloat(document.getElementById('withdraw-amount-usd').value) || 0;
       let detailsText = "";
 
-      if (usdAmount < 5) {
-        alert("Minimum withdrawal limit is $5.00");
+      const minVal = parseFloat(configDb.withdraw_min) || 5;
+      const maxVal = parseFloat(configDb.withdraw_max) || 10000;
+
+      if (usdAmount < minVal) {
+        alert(`Minimum withdrawal limit is $${minVal.toFixed(2)}`);
+        return;
+      }
+      if (usdAmount > maxVal) {
+        alert(`Maximum withdrawal limit is $${maxVal.toFixed(2)}`);
         return;
       }
       if (usdAmount > (currentUser.balance || 0)) {
@@ -2889,6 +2963,10 @@
       }
 
       const currentRate = getPkrRate();
+      const feePct = parseFloat(configDb.withdraw_fee) || 0;
+      const feeAmtUsd = usdAmount * (feePct / 100);
+      const netUsdAmount = usdAmount - feeAmtUsd;
+
       // Debiting user's main balance and updating current local state
       usersDb[currentUser.username].balance = parseFloat(usersDb[currentUser.username].balance || 0) - usdAmount;
       currentUser.balance = usersDb[currentUser.username].balance;
@@ -2898,8 +2976,10 @@
         txId: "TX" + Date.now(),
         user: currentUser.username,
         type: "withdrawal",
-        amountUsd: usdAmount,
-        amountPkr: usdAmount * currentRate,
+        amountUsd: netUsdAmount,
+        grossUsd: usdAmount,
+        feeUsd: feeAmtUsd,
+        amountPkr: netUsdAmount * currentRate,
         gateway: method,
         reference: detailsText,
         status: "pending",
@@ -2908,12 +2988,12 @@
 
       transactionsDb.push(newTx);
       saveTransaction(newTx);
-      addNotification(currentUser.username, `Withdrawal request of $${usdAmount.toFixed(2)} (${(usdAmount * currentRate).toFixed(2)} PKR) was submitted.`);
+      addNotification(currentUser.username, `Withdrawal request of $${usdAmount.toFixed(2)} (Fee: $${feeAmtUsd.toFixed(2)}, Net: $${netUsdAmount.toFixed(2)}) was submitted.`);
 
       saveState();
       updateDashboardData();
       closeWorkflowModal();
-      openModal("Request Placed", `Your withdrawal request for $${usdAmount.toFixed(2)} (${(usdAmount * currentRate).toFixed(2)} PKR) was placed and your earnings balance has been debited.`);
+      openModal("Request Placed", `Your withdrawal request for $${usdAmount.toFixed(2)} (Net: $${netUsdAmount.toFixed(2)} / ${(netUsdAmount * currentRate).toFixed(2)} PKR) was placed and your earnings balance has been debited.`);
     }
 
     /* REDEEM PROMO CODE */
@@ -3789,459 +3869,471 @@
 
         addNotification(targetUser, `Your deposit of $${parseFloat(tx.amountUsd).toFixed(2)} was approved. Plan "${tx.planName || 'Package'}" is now directly active.`);
 
-        // Multi-level Referral Commission Distributions (4%, 2%, 1%)
-        const parentL1 = usersDb[targetUser].referred_by;
-        if (parentL1 && usersDb[parentL1]) {
-          const l1Reward = parseFloat(tx.amountUsd) * 0.04;
-          usersDb[parentL1].balance = parseFloat(usersDb[parentL1].balance || 0) + l1Reward;
-          usersDb[parentL1].referral_comm = parseFloat(usersDb[parentL1].referral_comm || 0) + l1Reward;
+    // Multi-level Referral Commission Distributions (4%, 2%, 1%)
+    const parentL1 = usersDb[targetUser].referred_by;
+    if (parentL1 && usersDb[parentL1]) {
+      const l1Reward = parseFloat(tx.amountUsd) * 0.04;
+      usersDb[parentL1].balance = parseFloat(usersDb[parentL1].balance || 0) + l1Reward;
+      usersDb[parentL1].referral_comm = parseFloat(usersDb[parentL1].referral_comm || 0) + l1Reward;
+      
+      const commTx1 = {
+        txId: "TX" + Date.now() + "_C1",
+        user: parentL1,
+        type: "referral_comm",
+        amountUsd: l1Reward,
+        amountPkr: l1Reward * currentRate,
+        gateway: "Commission",
+        reference: `L1 commission from deposit by @${targetUser}`,
+        status: "paid",
+        timestamp: new Date().toLocaleString()
+      };
+      transactionsDb.push(commTx1);
+      saveTransaction(commTx1);
+
+      addNotification(parentL1, `L1 referral commission: $${l1Reward.toFixed(2)} from user ${targetUser}.`);
+
+      const parentL2 = usersDb[parentL1].referred_by;
+      if (parentL2 && usersDb[parentL2]) {
+        const l2Reward = parseFloat(tx.amountUsd) * 0.02;
+        usersDb[parentL2].balance = parseFloat(usersDb[parentL2].balance || 0) + l2Reward;
+        usersDb[parentL2].referral_comm = parseFloat(usersDb[parentL2].referral_comm || 0) + l2Reward;
+        
+        const commTx2 = {
+          txId: "TX" + Date.now() + "_C2",
+          user: parentL2,
+          type: "referral_comm",
+          amountUsd: l2Reward,
+          amountPkr: l2Reward * currentRate,
+          gateway: "Commission",
+          reference: `L2 commission from deposit by @${targetUser}`,
+          status: "paid",
+          timestamp: new Date().toLocaleString()
+        };
+        transactionsDb.push(commTx2);
+        saveTransaction(commTx2);
+
+        addNotification(parentL2, `L2 referral commission: $${l2Reward.toFixed(2)} from user ${targetUser}.`);
+
+        const parentL3 = usersDb[parentL2].referred_by;
+        if (parentL3 && usersDb[parentL3]) {
+          const l3Reward = parseFloat(tx.amountUsd) * 0.01;
+          usersDb[parentL3].balance = parseFloat(usersDb[parentL3].balance || 0) + l3Reward;
+          usersDb[parentL3].referral_comm = parseFloat(usersDb[parentL3].referral_comm || 0) + l3Reward;
           
-          const commTx1 = {
-            txId: "TX" + Date.now() + "_C1",
-            user: parentL1,
+          const commTx3 = {
+            txId: "TX" + Date.now() + "_C3",
+            user: parentL3,
             type: "referral_comm",
-            amountUsd: l1Reward,
-            amountPkr: l1Reward * currentRate,
+            amountUsd: l3Reward,
+            amountPkr: l3Reward * currentRate,
             gateway: "Commission",
-            reference: `L1 commission from deposit by @${targetUser}`,
+            reference: `L3 commission from deposit by @${targetUser}`,
             status: "paid",
             timestamp: new Date().toLocaleString()
           };
-          transactionsDb.push(commTx1);
-          saveTransaction(commTx1);
+          transactionsDb.push(commTx3);
+          saveTransaction(commTx3);
 
-          addNotification(parentL1, `L1 referral commission: $${l1Reward.toFixed(2)} from user ${targetUser}.`);
-
-          const parentL2 = usersDb[parentL1].referred_by;
-          if (parentL2 && usersDb[parentL2]) {
-            const l2Reward = parseFloat(tx.amountUsd) * 0.02;
-            usersDb[parentL2].balance = parseFloat(usersDb[parentL2].balance || 0) + l2Reward;
-            usersDb[parentL2].referral_comm = parseFloat(usersDb[parentL2].referral_comm || 0) + l2Reward;
-            
-            const commTx2 = {
-              txId: "TX" + Date.now() + "_C2",
-              user: parentL2,
-              type: "referral_comm",
-              amountUsd: l2Reward,
-              amountPkr: l2Reward * currentRate,
-              gateway: "Commission",
-              reference: `L2 commission from deposit by @${targetUser}`,
-              status: "paid",
-              timestamp: new Date().toLocaleString()
-            };
-            transactionsDb.push(commTx2);
-            saveTransaction(commTx2);
-
-            addNotification(parentL2, `L2 referral commission: $${l2Reward.toFixed(2)} from user ${targetUser}.`);
-
-            const parentL3 = usersDb[parentL2].referred_by;
-            if (parentL3 && usersDb[parentL3]) {
-              const l3Reward = parseFloat(tx.amountUsd) * 0.01;
-              usersDb[parentL3].balance = parseFloat(usersDb[parentL3].balance || 0) + l3Reward;
-              usersDb[parentL3].referral_comm = parseFloat(usersDb[parentL3].referral_comm || 0) + l3Reward;
-              
-              const commTx3 = {
-                txId: "TX" + Date.now() + "_C3",
-                user: parentL3,
-                type: "referral_comm",
-                amountUsd: l3Reward,
-                amountPkr: l3Reward * currentRate,
-                gateway: "Commission",
-                reference: `L3 commission from deposit by @${targetUser}`,
-                status: "paid",
-                timestamp: new Date().toLocaleString()
-              };
-              transactionsDb.push(commTx3);
-              saveTransaction(commTx3);
-
-              addNotification(parentL3, `L3 referral commission: $${l3Reward.toFixed(2)} from user ${targetUser}.`);
-            }
-          }
+          addNotification(parentL3, `L3 referral commission: $${l3Reward.toFixed(2)} from user ${targetUser}.`);
         }
-
-      } else {
-        transactionsDb[txIndex].status = "rejected";
-        addNotification(targetUser, `Your deposit request for $${parseFloat(tx.amountUsd).toFixed(2)} was rejected by administration.`);
       }
-
-      saveTransaction(transactionsDb[txIndex]);
-      saveState();
-      renderAdminDeposits();
     }
 
-    function renderAdminWithdrawals() {
-      const container = document.getElementById('admin-withdraws-list');
-      if (!container) return;
-      container.innerHTML = "";
+  } else {
+    transactionsDb[txIndex].status = "rejected";
+    addNotification(targetUser, `Your deposit request for $${parseFloat(tx.amountUsd).toFixed(2)} was rejected by administration.`);
+  }
 
-      const pendings = (transactionsDb || []).filter(t => t && t.type === 'withdrawal' && t.status === 'pending');
+  saveTransaction(transactionsDb[txIndex]);
+  saveState();
+  renderAdminDeposits();
+}
 
-      if (pendings.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No pending withdrawal requests.</p>`;
-        return;
-      }
+function renderAdminWithdrawals() {
+  const container = document.getElementById('admin-withdraws-list');
+  if (!container) return;
+  container.innerHTML = "";
 
-      pendings.forEach(t => {
-        container.innerHTML += `
-          <div class="admin-item-row">
-            <div>
-              <p style="font-size:0.8rem">User: <b>${t.user}</b></p>
-              <p style="font-size:0.7rem">Gateway: ${t.gateway}</p>
-              <p style="font-size:0.7rem; word-break:break-all;">Details: ${t.reference}</p>
-              <p style="font-size:0.85rem; font-weight:700; color:#ef4444; margin-top:4px;">$${parseFloat(t.amountUsd || 0).toFixed(2)} (${parseFloat(t.amountPkr || 0).toLocaleString()} PKR)</p>
-            </div>
-            <div style="display:flex; flex-direction:column; gap:6px;">
-              <button class="admin-action-btn admin-btn-approve" onclick="adminProcessWithdraw('${t.txId}', 'approve')">Paid</button>
-              <button class="admin-action-btn admin-btn-reject" onclick="adminProcessWithdraw('${t.txId}', 'reject')">Reject</button>
-            </div>
-          </div>
-        `;
-      });
-    }
+  const pendings = (transactionsDb || []).filter(t => t && t.type === 'withdrawal' && t.status === 'pending');
 
-    function adminProcessWithdraw(txId, action) {
-      const txIndex = transactionsDb.findIndex(t => t && t.txId === txId);
-      if (txIndex === -1) return;
+  if (pendings.length === 0) {
+    container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No pending withdrawal requests.</p>`;
+    return;
+  }
 
-      const tx = transactionsDb[txIndex];
-      const targetUser = tx.user;
-
-      if (action === 'approve') {
-        transactionsDb[txIndex].status = "paid";
-        usersDb[targetUser].total_withdrawals = parseFloat(usersDb[targetUser].total_withdrawals || 0) + parseFloat(tx.amountUsd);
-        addNotification(targetUser, `Withdrawal request for $${parseFloat(tx.amountUsd).toFixed(2)} is approved and processed.`);
-      } else {
-        transactionsDb[txIndex].status = "rejected";
-        // If rejected, refund the debited amount back to user's main balance
-        usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance || 0) + parseFloat(tx.amountUsd);
-        if (currentUser && currentUser.username === targetUser) {
-          currentUser.balance = usersDb[targetUser].balance;
-        }
-        database.ref('trading_users/' + targetUser + '/balance').set(usersDb[targetUser].balance);
-        addNotification(targetUser, `Your withdrawal request for $${parseFloat(tx.amountUsd).toFixed(2)} was rejected. Funds returned to balance.`);
-      }
-
-      saveTransaction(transactionsDb[txIndex]);
-      saveState();
-      renderAdminWithdrawals();
-    }
-
-    function adminAddPlan(e) {
-      e.preventDefault();
-      const name = document.getElementById('admin-plan-name').value.trim();
-      const price = parseFloat(document.getElementById('admin-plan-price').value);
-      const daily = parseFloat(document.getElementById('admin-plan-daily').value);
-      const duration = parseInt(document.getElementById('admin-plan-duration').value);
-
-      const newPlan = { name, price, daily, duration };
-      plansDb.push(newPlan);
-      saveState();
-
-      document.getElementById('admin-plan-name').value = "";
-      document.getElementById('admin-plan-price').value = "";
-      document.getElementById('admin-plan-daily').value = "";
-      document.getElementById('admin-plan-duration').value = "";
-
-      renderAdminPlans();
-      alert("Investment package published.");
-    }
-
-    function renderAdminPlans() {
-      const container = document.getElementById('admin-plans-list');
-      if (!container) return;
-      container.innerHTML = "";
-
-      if (!plansDb || plansDb.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No published plans exist.</p>`;
-        return;
-      }
-
-      plansDb.forEach((p, i) => {
-        if (!p) return;
-        container.innerHTML += `
-          <div class="admin-item-row">
-            <div>
-              <p style="font-size:0.85rem"><b>${p.name}</b></p>
-              <p style="font-size:0.7rem">Cost: $${parseFloat(p.price || 0).toFixed(2)} | Daily: $${parseFloat(p.daily || 0).toFixed(2)} | Duration: ${p.duration} Days</p>
-            </div>
-            <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePlan(${i})">Remove</button>
-          </div>
-        `;
-      });
-    }
-
-    function adminDeletePlan(index) {
-      plansDb.splice(index, 1);
-      saveState();
-      renderAdminPlans();
-    }
-
-    function adminSaveGateways(e) {
-      e.preventDefault();
-      configDb.pkr_rate = parseFloat(document.getElementById('admin-pkr-rate').value) || 300;
-      configDb.whatsapp_admin = document.getElementById('admin-whatsapp-num').value.trim();
-      configDb.whatsapp_channel = document.getElementById('admin-whatsapp-channel').value.trim();
-      configDb.easypaisa_num = document.getElementById('admin-easypaisa-num').value.trim();
-      configDb.easypaisa_name = document.getElementById('admin-easypaisa-name').value.trim();
-      configDb.jazzcash_num = document.getElementById('admin-jazzcash-num').value.trim();
-      configDb.jazzcash_name = document.getElementById('admin-jazzcash-name').value.trim();
-      configDb.usdt_addr = document.getElementById('admin-usdt-addr').value.trim();
-
-      saveState();
-      alert("System & Payment Configurations saved successfully.");
-    }
-
-    function loadAdminGatewayInputs() {
-      document.getElementById('admin-pkr-rate').value = configDb.pkr_rate || 300;
-      document.getElementById('admin-whatsapp-num').value = configDb.whatsapp_admin || "";
-      document.getElementById('admin-whatsapp-channel').value = configDb.whatsapp_channel || "";
-      document.getElementById('admin-easypaisa-num').value = configDb.easypaisa_num || "";
-      document.getElementById('admin-easypaisa-name').value = configDb.easypaisa_name || "";
-      document.getElementById('admin-jazzcash-num').value = configDb.jazzcash_num || "";
-      document.getElementById('admin-jazzcash-name').value = configDb.jazzcash_name || "";
-      document.getElementById('admin-usdt-addr').value = configDb.usdt_addr || "";
-    }
-
-    /* ===================================================================
-       ADMIN WITHDRAWAL LOCK SYSTEM ENGINE & USER MANAGEMENT
-       =================================================================== */
-    function renderAdminLocksList() {
-      const container = document.getElementById('admin-locks-list');
-      if (!container) return;
-      container.innerHTML = "";
-
-      const users = Object.values(usersDb).filter(u => u && typeof u === 'object' && u.username && u.username !== "admin");
-
-      if (users.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No registered users yet.</p>`;
-        return;
-      }
-
-      users.forEach(u => {
-        const currentLock = u.withdrawalLock || { enabled: false, requiredInvites: 0 };
-        const directInvites = getTeamData(u.username).l1.length;
-        
-        container.innerHTML += `
-          <div class="admin-item-row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border-radius: 14px; border: 1px solid var(--input-border);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
-              <div>
-                <p style="font-size:0.95rem; font-weight:700;">User: <b style="color:var(--dark-accent)">${u.username}</b></p>
-                <p style="font-size:0.75rem; color:var(--text-muted)">Phone: <b>${u.phone || 'N/A'}</b> | UID: <b>${u.uid || 'N/A'}</b></p>
-                <p style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;">
-                  Bal: <b style="color:var(--accent-green)">$${parseFloat(u.balance || 0).toFixed(2)}</b> | Deposits: <b>$${parseFloat(u.total_deposits || 0).toFixed(2)}</b>
-                </p>
-                <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Referred By: <b>${u.referred_by || 'None'}</b> | Direct Invites: <b>${directInvites}</b></p>
-              </div>
-              <div>
-                <button class="admin-action-btn admin-btn-reject" style="padding:6px 10px;" onclick="adminDeleteUser('${u.username}')">Delete User</button>
-              </div>
-            </div>
-            
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div style="display:flex; align-items:center; gap:6px;">
-                <input type="checkbox" id="lock-enabled-${u.username}" ${currentLock.enabled ? 'checked' : ''} style="transform: scale(1.2); cursor:pointer;">
-                <label for="lock-enabled-${u.username}" style="font-size:0.75rem; font-weight:700; cursor:pointer;">Enable Invite Lock</label>
-              </div>
-            </div>
-
-            <div style="display:flex; gap:10px; align-items:center;">
-              <div class="input-group" style="margin-bottom:0; flex:1;">
-                <input type="number" id="lock-count-${u.username}" class="form-input" style="padding: 10px; padding-left: 15px; border-radius: 12px; font-size:0.8rem;" placeholder="Required Invites Count" value="${currentLock.requiredInvites || 0}">
-              </div>
-              <button class="admin-action-btn admin-btn-approve" style="padding:10px 16px; border-radius:12px; font-weight:700;" onclick="adminSaveUserLock('${u.username}')">Save Lock</button>
-            </div>
-          </div>
-        `;
-      });
-    }
-
-    function adminSaveUserLock(username) {
-      const enabled = document.getElementById(`lock-enabled-${username}`).checked;
-      const requiredCount = parseInt(document.getElementById(`lock-count-${username}`).value) || 0;
-
-      if (!usersDb[username]) return;
-
-      usersDb[username].withdrawalLock = {
-        enabled: enabled,
-        requiredInvites: requiredCount
-      };
-
-      if (enabled) {
-        addNotification(username, `Security Notice: A withdrawal security restriction has been enabled on your account. You must invite at least ${requiredCount} direct users before withdrawals can be processed.`);
-      } else {
-        addNotification(username, `System Notice: Your withdrawal restriction lock has been deactivated. You can now standardly request withdrawals.`);
-      }
-
-      database.ref('trading_users/' + username + '/withdrawalLock').set(usersDb[username].withdrawalLock);
-      renderAdminLocksList();
-      alert(`Withdrawal restriction criteria saved for "${username}".`);
-    }
-
-    function adminDeleteUser(username) {
-      if (!confirm(`Are you sure you want to delete user account "${username}"? This cannot be undone.`)) return;
-      delete usersDb[username];
-      database.ref('trading_users/' + username).remove();
-      renderAdminLocksList();
-      alert(`User "${username}" has been deleted.`);
-    }
-
-    function adminCreatePromo(e) {
-      e.preventDefault();
-      const code = document.getElementById('admin-promo-code').value.toUpperCase().trim();
-      const reward = parseFloat(document.getElementById('admin-promo-reward').value);
-      const limit = parseInt(document.getElementById('admin-promo-limit').value);
-
-      const duplicatedIndex = promoDb.findIndex(p => p && p.code === code);
-      if (duplicatedIndex !== -1) {
-        alert("This promo code already exists.");
-        return;
-      }
-
-      promoDb.push({
-        code: code,
-        reward: reward,
-        memberLimit: limit,
-        claimedBy: []
-      });
-      saveState();
-
-      document.getElementById('admin-promo-code').value = "";
-      document.getElementById('admin-promo-reward').value = "";
-      document.getElementById('admin-promo-limit').value = "";
-      
-      renderAdminPromoList();
-      alert(`Promo code ${code} generated.`);
-    }
-
-    function renderAdminPromoList() {
-      const container = document.getElementById('admin-promo-list');
-      if (!container) return;
-      container.innerHTML = "";
-
-      if (!promoDb || promoDb.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No promo codes active.</p>`;
-        return;
-      }
-
-      promoDb.forEach((p, i) => {
-        if (!p) return;
-        const claimsCount = p.claimedBy ? p.claimedBy.length : 0;
-        const totalLimit = p.memberLimit ? p.memberLimit : "Unlimited";
-        container.innerHTML += `
-          <div class="admin-item-row">
-            <div>
-              <p style="font-size:0.85rem">Code: <b>${p.code}</b></p>
-              <p style="font-size:0.7rem">Reward: $${parseFloat(p.reward || 0).toFixed(2)} | Redemptions: ${claimsCount}/${totalLimit}</p>
-            </div>
-            <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePromo(${i})">Delete</button>
-          </div>
-        `;
-      });
-    }
-
-    function adminDeletePromo(index) {
-      promoDb.splice(index, 1);
-      saveState();
-      renderAdminPromoList();
-    }
-
-    function adminCreateTask(e) {
-      e.preventDefault();
-      const title = document.getElementById('admin-task-title').value.trim();
-      const limit = parseFloat(document.getElementById('admin-task-limit').value);
-      const reward = parseFloat(document.getElementById('admin-task-reward').value);
-      const desc = document.getElementById('admin-task-desc').value.trim();
-
-      tasksDb.push({
-        id: "TASK" + Date.now(),
-        title: title,
-        targetVolume: limit,
-        reward: reward,
-        description: desc
-      });
-
-      database.ref('trading_tasks').set(tasksDb);
-
-      document.getElementById('admin-task-title').value = "";
-      document.getElementById('admin-task-limit').value = "";
-      document.getElementById('admin-task-reward').value = "";
-      document.getElementById('admin-task-desc').value = "";
-
-      renderAdminTaskList();
-      alert("Reward task published.");
-    }
-
-    function renderAdminTaskList() {
-      const container = document.getElementById('admin-tasks-list');
-      if (!container) return;
-      container.innerHTML = "";
-
-      if (!tasksDb || tasksDb.length === 0) {
-        container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No active tasks configured.</p>`;
-        return;
-      }
-
-      tasksDb.forEach(t => {
-        if (!t) return;
-        container.innerHTML += `
-          <div class="admin-item-row">
-            <div>
-              <p style="font-size:0.85rem"><b>${t.title}</b></p>
-              <p style="font-size:0.7rem">Target Volume: $${parseFloat(t.targetVolume || 0).toFixed(2)} | Reward: $${parseFloat(t.reward || 0).toFixed(2)}</p>
-              <p style="font-size:0.75rem; color: var(--text-muted);">${t.description || ''}</p>
-            </div>
-            <button class="admin-action-btn admin-btn-reject" onclick="adminDeleteTask('${t.id}')">Delete</button>
-          </div>
-        `;
-      });
-    }
-
-    function adminDeleteTask(id) {
-      tasksDb = tasksDb.filter(t => t && t.id !== id);
-      database.ref('trading_tasks').set(tasksDb);
-      renderAdminTaskList();
-    }
-
-
-    /* UTILITIES & MODALS HELPER */
-    function openModal(titleText, bodyText) {
-      document.getElementById('modal-title').innerText = titleText;
-      document.getElementById('modal-body').innerText = bodyText;
-      document.getElementById('action-modal').classList.remove('hidden');
-    }
-
-    function closeModal() {
-      document.getElementById('action-modal').classList.add('hidden');
-    }
-
-    function closeWorkflowModal() {
-      document.getElementById('workflow-modal').classList.add('hidden');
-      updateNotificationBadges(); 
-    }
-
-    function openTermsModal(e) {
-      if (e) e.preventDefault();
-      const modalInner = document.getElementById('workflow-modal-inner');
-      modalInner.innerHTML = `
-        <h3 style="color: var(--text-main); margin-bottom: 12px;"><i class="fa-solid fa-scroll" style="color: var(--accent-gold);"></i> Terms & Conditions</h3>
-        <div style="text-align: left; font-size: 0.8rem; color: var(--text-muted); max-height: 250px; overflow-y: auto; padding-right: 5px; line-height: 1.5; border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.25);">
-          <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">1. Simulated Services & Testing Only</p>
-          <p style="margin-bottom: 12px;">This application functions entirely as a simulated mockup utility. No real fiat currencies, bank deposits, digital tokens, or blockchain network activities are processed, received, or stored.</p>
-          
-          <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">2. Account Security & Data Policies</p>
-          <p style="margin-bottom: 12px;">All registered credentials, logs, referral links, and historical balances are stored safely within remote servers. Clearing your browser engine cache will not alter active user statistics.</p>
-          
-          <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">3. Virtual Team Systems & Commissions</p>
-          <p style="margin-bottom: 12px;">Multi-level downline commissions (L1: 4%, L2: 2%, L3: 1%) and other promotional bonuses are calculations compiled inside virtual loops for demonstration purposes. There are no real physical financial rewards.</p>
-          
-          <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">4. User Agreement</p>
-          <p style="margin-bottom: 12px;">By interacting with this testing platform, you agree to treat all assets and features as educational mockup assets. Users agree to prevent using dummy platform features for real-world transaction emulation.</p>
+  pendings.forEach(t => {
+    const feeInfo = t.feeUsd ? ` | Fee: $${parseFloat(t.feeUsd).toFixed(2)}` : '';
+    const grossInfo = t.grossUsd ? `Gross Requested: $${parseFloat(t.grossUsd).toFixed(2)} | ` : '';
+    container.innerHTML += `
+      <div class="admin-item-row">
+        <div>
+          <p style="font-size:0.8rem">User: <b>${t.user}</b></p>
+          <p style="font-size:0.7rem">Gateway: ${t.gateway}</p>
+          <p style="font-size:0.7rem; word-break:break-all;">Details: ${t.reference}</p>
+          <p style="font-size:0.7rem; color:var(--text-muted);">${grossInfo}Net Pay: <b style="color:var(--accent-green)">$${parseFloat(t.amountUsd || 0).toFixed(2)}</b>${feeInfo}</p>
+          <p style="font-size:0.85rem; font-weight:700; color:#ef4444; margin-top:4px;">Payout PKR: ${parseFloat(t.amountPkr || 0).toLocaleString()} PKR</p>
         </div>
-        <button class="btn-primary" style="margin-top: 15px;" onclick="closeWorkflowModal()">I Understand & Accept</button>
-      `;
-      document.getElementById('workflow-modal').classList.remove('hidden');
+        <div style="display:flex; flex-direction:column; gap:6px;">
+          <button class="admin-action-btn admin-btn-approve" onclick="adminProcessWithdraw('${t.txId}', 'approve')">Paid</button>
+          <button class="admin-action-btn admin-btn-reject" onclick="adminProcessWithdraw('${t.txId}', 'reject')">Reject</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function adminProcessWithdraw(txId, action) {
+  const txIndex = transactionsDb.findIndex(t => t && t.txId === txId);
+  if (txIndex === -1) return;
+
+  const tx = transactionsDb[txIndex];
+  const targetUser = tx.user;
+
+  if (action === 'approve') {
+    transactionsDb[txIndex].status = "paid";
+    const totalPaidOut = parseFloat(tx.grossUsd || tx.amountUsd);
+    usersDb[targetUser].total_withdrawals = parseFloat(usersDb[targetUser].total_withdrawals || 0) + totalPaidOut;
+    addNotification(targetUser, `Withdrawal request for $${parseFloat(tx.amountUsd).toFixed(2)} is approved and processed.`);
+  } else {
+    transactionsDb[txIndex].status = "rejected";
+    // If rejected, refund the original gross debited amount back to user's main balance
+    const refundAmount = parseFloat(tx.grossUsd || tx.amountUsd);
+    usersDb[targetUser].balance = parseFloat(usersDb[targetUser].balance || 0) + refundAmount;
+    if (currentUser && currentUser.username === targetUser) {
+      currentUser.balance = usersDb[targetUser].balance;
     }
-  </script>
+    database.ref('trading_users/' + targetUser + '/balance').set(usersDb[targetUser].balance);
+    addNotification(targetUser, `Your withdrawal request for $${refundAmount.toFixed(2)} was rejected. Funds returned to balance.`);
+  }
+
+  saveTransaction(transactionsDb[txIndex]);
+  saveState();
+  renderAdminWithdrawals();
+}
+
+function adminAddPlan(e) {
+  e.preventDefault();
+  const name = document.getElementById('admin-plan-name').value.trim();
+  const price = parseFloat(document.getElementById('admin-plan-price').value);
+  const daily = parseFloat(document.getElementById('admin-plan-daily').value);
+  const duration = parseInt(document.getElementById('admin-plan-duration').value);
+
+  const newPlan = { name, price, daily, duration };
+  plansDb.push(newPlan);
+  saveState();
+
+  document.getElementById('admin-plan-name').value = "";
+  document.getElementById('admin-plan-price').value = "";
+  document.getElementById('admin-plan-daily').value = "";
+  document.getElementById('admin-plan-duration').value = "";
+
+  renderAdminPlans();
+  alert("Investment package published.");
+}
+
+function renderAdminPlans() {
+  const container = document.getElementById('admin-plans-list');
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!plansDb || plansDb.length === 0) {
+    container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No published plans exist.</p>`;
+    return;
+  }
+
+  plansDb.forEach((p, i) => {
+    if (!p) return;
+    container.innerHTML += `
+      <div class="admin-item-row">
+        <div>
+          <p style="font-size:0.85rem"><b>${p.name}</b></p>
+          <p style="font-size:0.7rem">Cost: $${parseFloat(p.price || 0).toFixed(2)} | Daily: $${parseFloat(p.daily || 0).toFixed(2)} | Duration: ${p.duration} Days</p>
+        </div>
+        <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePlan(${i})">Remove</button>
+      </div>
+    `;
+  });
+}
+
+function adminDeletePlan(index) {
+  plansDb.splice(index, 1);
+  saveState();
+  renderAdminPlans();
+}
+
+function adminSaveGateways(e) {
+  e.preventDefault();
+  configDb.pkr_rate = parseFloat(document.getElementById('admin-pkr-rate').value) || 300;
+  configDb.withdraw_min = parseFloat(document.getElementById('admin-withdraw-min').value) || 5;
+  configDb.withdraw_max = parseFloat(document.getElementById('admin-withdraw-max').value) || 10000;
+  configDb.withdraw_fee = parseFloat(document.getElementById('admin-withdraw-fee').value) || 0;
+  configDb.withdrawals_off = document.getElementById('admin-withdrawals-off-toggle').checked;
+  configDb.whatsapp_admin = document.getElementById('admin-whatsapp-num').value.trim();
+  configDb.whatsapp_channel = document.getElementById('admin-whatsapp-channel').value.trim();
+  configDb.easypaisa_num = document.getElementById('admin-easypaisa-num').value.trim();
+  configDb.easypaisa_name = document.getElementById('admin-easypaisa-name').value.trim();
+  configDb.jazzcash_num = document.getElementById('admin-jazzcash-num').value.trim();
+  configDb.jazzcash_name = document.getElementById('admin-jazzcash-name').value.trim();
+  configDb.usdt_addr = document.getElementById('admin-usdt-addr').value.trim();
+
+  saveState();
+  alert("System & Payment Configurations saved successfully.");
+}
+
+function loadAdminGatewayInputs() {
+  document.getElementById('admin-pkr-rate').value = configDb.pkr_rate || 300;
+  document.getElementById('admin-withdraw-min').value = configDb.withdraw_min !== undefined ? configDb.withdraw_min : 5;
+  document.getElementById('admin-withdraw-max').value = configDb.withdraw_max !== undefined ? configDb.withdraw_max : 10000;
+  document.getElementById('admin-withdraw-fee').value = configDb.withdraw_fee !== undefined ? configDb.withdraw_fee : 0;
+  document.getElementById('admin-withdrawals-off-toggle').checked = !!configDb.withdrawals_off;
+  document.getElementById('admin-whatsapp-num').value = configDb.whatsapp_admin || "";
+  document.getElementById('admin-whatsapp-channel').value = configDb.whatsapp_channel || "";
+  document.getElementById('admin-easypaisa-num').value = configDb.easypaisa_num || "";
+  document.getElementById('admin-easypaisa-name').value = configDb.easypaisa_name || "";
+  document.getElementById('admin-jazzcash-num').value = configDb.jazzcash_num || "";
+  document.getElementById('admin-jazzcash-name').value = configDb.jazzcash_name || "";
+  document.getElementById('admin-usdt-addr').value = configDb.usdt_addr || "";
+}
+
+/* ===================================================================
+   ADMIN WITHDRAWAL LOCK SYSTEM ENGINE & USER MANAGEMENT
+   =================================================================== */
+function renderAdminLocksList() {
+  const container = document.getElementById('admin-locks-list');
+  if (!container) return;
+  container.innerHTML = "";
+
+  const users = Object.values(usersDb).filter(u => u && typeof u === 'object' && u.username && u.username !== "admin");
+
+  if (users.length === 0) {
+    container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No registered users yet.</p>`;
+    return;
+  }
+
+  users.forEach(u => {
+    const currentLock = u.withdrawalLock || { enabled: false, requiredInvites: 0 };
+    const directInvites = getTeamData(u.username).l1.length;
+    
+    container.innerHTML += `
+      <div class="admin-item-row" style="flex-direction: column; align-items: stretch; gap: 10px; padding: 14px; margin-bottom: 12px; background: rgba(255,255,255,0.03); border-radius: 14px; border: 1px solid var(--input-border);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 8px;">
+          <div>
+            <p style="font-size:0.95rem; font-weight:700;">User: <b style="color:var(--dark-accent)">${u.username}</b></p>
+            <p style="font-size:0.75rem; color:var(--text-muted)">Phone: <b>${u.phone || 'N/A'}</b> | UID: <b>${u.uid || 'N/A'}</b></p>
+            <p style="font-size:0.75rem; color:var(--text-sub); margin-top:2px;">
+              Bal: <b style="color:var(--accent-green)">$${parseFloat(u.balance || 0).toFixed(2)}</b> | Deposits: <b>$${parseFloat(u.total_deposits || 0).toFixed(2)}</b>
+            </p>
+            <p style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">Referred By: <b>${u.referred_by || 'None'}</b> | Direct Invites: <b>${directInvites}</b></p>
+          </div>
+          <div>
+            <button class="admin-action-btn admin-btn-reject" style="padding:6px 10px;" onclick="adminDeleteUser('${u.username}')">Delete User</button>
+          </div>
+        </div>
+        
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <input type="checkbox" id="lock-enabled-${u.username}" ${currentLock.enabled ? 'checked' : ''} style="transform: scale(1.2); cursor:pointer;">
+            <label for="lock-enabled-${u.username}" style="font-size:0.75rem; font-weight:700; cursor:pointer;">Enable Invite Lock</label>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:10px; align-items:center;">
+          <div class="input-group" style="margin-bottom:0; flex:1;">
+            <input type="number" id="lock-count-${u.username}" class="form-input" style="padding: 10px; padding-left: 15px; border-radius: 12px; font-size:0.8rem;" placeholder="Required Invites Count" value="${currentLock.requiredInvites || 0}">
+          </div>
+          <button class="admin-action-btn admin-btn-approve" style="padding:10px 16px; border-radius:12px; font-weight:700;" onclick="adminSaveUserLock('${u.username}')">Save Lock</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function adminSaveUserLock(username) {
+  const enabled = document.getElementById(`lock-enabled-${username}`).checked;
+  const requiredCount = parseInt(document.getElementById(`lock-count-${username}`).value) || 0;
+
+  if (!usersDb[username]) return;
+
+  usersDb[username].withdrawalLock = {
+    enabled: enabled,
+    requiredInvites: requiredCount
+  };
+
+  if (enabled) {
+    addNotification(username, `Security Notice: A withdrawal security restriction has been enabled on your account. You must invite at least ${requiredCount} direct users before withdrawals can be processed.`);
+  } else {
+    addNotification(username, `System Notice: Your withdrawal restriction lock has been deactivated. You can now standardly request withdrawals.`);
+  }
+
+  database.ref('trading_users/' + username + '/withdrawalLock').set(usersDb[username].withdrawalLock);
+  renderAdminLocksList();
+  alert(`Withdrawal restriction criteria saved for "${username}".`);
+}
+
+function adminDeleteUser(username) {
+  if (!confirm(`Are you sure you want to delete user account "${username}"? This cannot be undone.`)) return;
+  delete usersDb[username];
+  database.ref('trading_users/' + username).remove();
+  renderAdminLocksList();
+  alert(`User "${username}" has been deleted.`);
+}
+
+function adminCreatePromo(e) {
+  e.preventDefault();
+  const code = document.getElementById('admin-promo-code').value.toUpperCase().trim();
+  const reward = parseFloat(document.getElementById('admin-promo-reward').value);
+  const limit = parseInt(document.getElementById('admin-promo-limit').value);
+
+  const duplicatedIndex = promoDb.findIndex(p => p && p.code === code);
+  if (duplicatedIndex !== -1) {
+    alert("This promo code already exists.");
+    return;
+  }
+
+  promoDb.push({
+    code: code,
+    reward: reward,
+    memberLimit: limit,
+    claimedBy: []
+  });
+  saveState();
+
+  document.getElementById('admin-promo-code').value = "";
+  document.getElementById('admin-promo-reward').value = "";
+  document.getElementById('admin-promo-limit').value = "";
+  
+  renderAdminPromoList();
+  alert(`Promo code ${code} generated.`);
+}
+
+function renderAdminPromoList() {
+  const container = document.getElementById('admin-promo-list');
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!promoDb || promoDb.length === 0) {
+    container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No promo codes active.</p>`;
+    return;
+  }
+
+  promoDb.forEach((p, i) => {
+    if (!p) return;
+    const claimsCount = p.claimedBy ? p.claimedBy.length : 0;
+    const totalLimit = p.memberLimit ? p.memberLimit : "Unlimited";
+    container.innerHTML += `
+      <div class="admin-item-row">
+        <div>
+          <p style="font-size:0.85rem">Code: <b>${p.code}</b></p>
+          <p style="font-size:0.7rem">Reward: $${parseFloat(p.reward || 0).toFixed(2)} | Redemptions: ${claimsCount}/${totalLimit}</p>
+        </div>
+        <button class="admin-action-btn admin-btn-reject" onclick="adminDeletePromo(${i})">Delete</button>
+      </div>
+    `;
+  });
+}
+
+function adminDeletePromo(index) {
+  promoDb.splice(index, 1);
+  saveState();
+  renderAdminPromoList();
+}
+
+function adminCreateTask(e) {
+  e.preventDefault();
+  const title = document.getElementById('admin-task-title').value.trim();
+  const limit = parseFloat(document.getElementById('admin-task-limit').value);
+  const reward = parseFloat(document.getElementById('admin-task-reward').value);
+  const desc = document.getElementById('admin-task-desc').value.trim();
+
+  tasksDb.push({
+    id: "TASK" + Date.now(),
+    title: title,
+    targetVolume: limit,
+    reward: reward,
+    description: desc
+  });
+
+  database.ref('trading_tasks').set(tasksDb);
+
+  document.getElementById('admin-task-title').value = "";
+  document.getElementById('admin-task-limit').value = "";
+  document.getElementById('admin-task-reward').value = "";
+  document.getElementById('admin-task-desc').value = "";
+
+  renderAdminTaskList();
+  alert("Reward task published.");
+}
+
+function renderAdminTaskList() {
+  const container = document.getElementById('admin-tasks-list');
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!tasksDb || tasksDb.length === 0) {
+    container.innerHTML = `<p style="font-size:0.8rem; color:var(--text-muted);">No active tasks configured.</p>`;
+    return;
+  }
+
+  tasksDb.forEach(t => {
+    if (!t) return;
+    container.innerHTML += `
+      <div class="admin-item-row">
+        <div>
+          <p style="font-size:0.85rem"><b>${t.title}</b></p>
+          <p style="font-size:0.7rem">Target Volume: $${parseFloat(t.targetVolume || 0).toFixed(2)} | Reward: $${parseFloat(t.reward || 0).toFixed(2)}</p>
+          <p style="font-size:0.75rem; color: var(--text-muted);">${t.description || ''}</p>
+        </div>
+        <button class="admin-action-btn admin-btn-reject" onclick="adminDeleteTask('${t.id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+function adminDeleteTask(id) {
+  tasksDb = tasksDb.filter(t => t && t.id !== id);
+  database.ref('trading_tasks').set(tasksDb);
+  renderAdminTaskList();
+}
+
+
+/* UTILITIES & MODALS HELPER */
+function openModal(titleText, bodyText) {
+  document.getElementById('modal-title').innerText = titleText;
+  document.getElementById('modal-body').innerText = bodyText;
+  document.getElementById('action-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('action-modal').classList.add('hidden');
+}
+
+function closeWorkflowModal() {
+  document.getElementById('workflow-modal').classList.add('hidden');
+  updateNotificationBadges(); 
+}
+
+function openTermsModal(e) {
+  if (e) e.preventDefault();
+  const modalInner = document.getElementById('workflow-modal-inner');
+  modalInner.innerHTML = `
+    <h3 style="color: var(--text-main); margin-bottom: 12px;"><i class="fa-solid fa-scroll" style="color: var(--accent-gold);"></i> Terms & Conditions</h3>
+    <div style="text-align: left; font-size: 0.8rem; color: var(--text-muted); max-height: 250px; overflow-y: auto; padding-right: 5px; line-height: 1.5; border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; background: rgba(0,0,0,0.25);">
+      <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">1. Simulated Services & Testing Only</p>
+      <p style="margin-bottom: 12px;">This application functions entirely as a simulated mockup utility. No real fiat currencies, bank deposits, digital tokens, or blockchain network activities are processed, received, or stored.</p>
+      
+      <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">2. Account Security & Data Policies</p>
+      <p style="margin-bottom: 12px;">All registered credentials, logs, referral links, and historical balances are stored safely within remote servers. Clearing your browser engine cache will not alter active user statistics.</p>
+      
+      <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">3. Virtual Team Systems & Commissions</p>
+      <p style="margin-bottom: 12px;">Multi-level downline commissions (L1: 4%, L2: 2%, L3: 1%) and other promotional bonuses are calculations compiled inside virtual loops for demonstration purposes. There are no real physical financial rewards.</p>
+      
+      <p style="margin-bottom: 8px; font-weight: 700; color: var(--text-main);">4. User Agreement</p>
+      <p style="margin-bottom: 12px;">By interacting with this testing platform, you agree to treat all assets and features as educational mockup assets. Users agree to prevent using dummy platform features for real-world transaction emulation.</p>
+    </div>
+    <button class="btn-primary" style="margin-top: 15px;" onclick="closeWorkflowModal()">I Understand & Accept</button>
+  `;
+  document.getElementById('workflow-modal').classList.remove('hidden');
+}
+</script>
 </body>
 </html>
-            
